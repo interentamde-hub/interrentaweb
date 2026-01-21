@@ -556,7 +556,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
               <div>
                 <h2 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#b3b3b3' }}>
-                  Propiedades <span style={{ color: '#ecb337' }}>destacadas</span>
+                  Propiedades <span style={{ color: '#ecb337' }}>disponibles</span>
                 </h2>
                 <p style={{ color: '#9ca3af' }}>
                   {filteredProperties.length} propiedades encontradas
