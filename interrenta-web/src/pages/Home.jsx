@@ -248,8 +248,13 @@ export default function Home() {
           <AnimatedSection>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 sm:gap-6 mb-8 sm:mb-12">
               <div>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-4" style={{ color: '#b3b3b3' }}>
-                  Propiedades <span style={{ color: '#ecb337' }}>destacadas</span>
+                <h2
+                    className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-4"
+                    style={{ color: '#b3b3b3' }}
+                >
+                    Propiedades <span style={{ color: '#ecb337' }}>disponibles</span>
+                </h2>
+
                 </h2>
                 <p style={{ color: '#9ca3af' }}>
                   {filteredProperties.length} propiedades encontradas
