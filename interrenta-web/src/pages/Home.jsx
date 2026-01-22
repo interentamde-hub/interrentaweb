@@ -565,7 +565,7 @@ export default function Home() {
               <h4 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg" style={{ color: '#d7af4d' }}>Contacto</h4>
               <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base" style={{ color: '#9ca3af' }}>
                 <li className="flex items-center gap-2">
-                  <span>📧</span> interentamde@gmail.com
+                  <span>📧</span> comercial@interrenta.com
                 </li>
                 <li className="flex items-center gap-2">
                   <span>📞</span> +57 302 574 9331
