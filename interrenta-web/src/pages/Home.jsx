@@ -255,7 +255,6 @@ export default function Home() {
                     Propiedades <span style={{ color: '#ecb337' }}>disponibles</span>
                 </h2>
 
-                </h2>
                 <p style={{ color: '#9ca3af' }}>
                   {filteredProperties.length} propiedades encontradas
                 </p>
