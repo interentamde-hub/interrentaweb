@@ -103,7 +103,7 @@ export default function Home() {
       {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background animado */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #161616 0%, #262525 50%, #1a1a1a 100%)' }}>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #0e4143 0%, #262525 50%, #0e4143 100%)' }}>
           <div className="absolute inset-0 opacity-30">
             <motion.div
               animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
