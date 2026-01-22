@@ -12,24 +12,44 @@ export default function ProtectedRoute({ children }) {
 
   const checkAuth = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
       
-      if (!user) {
+      if (userError) {
+        console.error('User error:', userError)
         setLoading(false)
         return
       }
 
-      const { data: profile } = await supabase
+      if (!user) {
+        console.log('No user found')
+        setLoading(false)
+        return
+      }
+
+      console.log('User authenticated:', user.email)
+
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
 
-      if (profile?.role === 'admin') {
-        setAllowed(true)
+      if (profileError) {
+        console.error('Profile error:', profileError)
+        setLoading(false)
+        return
       }
-    } catch (error) {
-      console.error('Error checking auth:', error)
+
+      console.log('Profile:', profile)
+
+      if (profile?.role === 'admin') {
+        console.log('Access granted - Admin role confirmed')
+        setAllowed(true)
+      } else {
+        console.log('Access denied - Not admin')
+      }
+    } catch (err) {
+      console.error('Auth check error:', err)
     } finally {
       setLoading(false)
     }
@@ -44,7 +64,8 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (!allowed) {
-    return <Navigate to="/admin-login" replace />
+    // CAMBIO AQUÍ: usar la ruta correcta
+    return <Navigate to="/panel-ir8x7k2m9z" replace />
   }
 
   return children

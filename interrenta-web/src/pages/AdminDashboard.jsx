@@ -25,7 +25,7 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    navigate('/admin-login')
+    navigate('/panel-ir8x7k2m9z')  // CAMBIO AQUÍ
   }
 
   const handleDelete = async (id) => {
