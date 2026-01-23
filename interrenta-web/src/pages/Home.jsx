@@ -130,7 +130,7 @@ export default function Home() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url(${fondoImage})`,
-            opacity: 0.5,
+            opacity: 1,
           }}
         />
 
