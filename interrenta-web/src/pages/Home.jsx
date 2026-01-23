@@ -4,8 +4,8 @@ import { getAllProperties } from "../services/property.service";
 import Navbar from "../components/layout/Navbar";
 import PropertyCard from "../components/property/PropertyCard";
 import aboutImage from "../../src/assets/familia.png";
-import fondoImage from '../assets/fondo.jpg'
-import logoImage from '../assets/LogointerrentaTransparente.png'
+import fondoImage from "../assets/fondo.jpg";
+import logoImage from "../assets/LogointerrentaTransparente.png";
 
 // Componente de sección animada
 const AnimatedSection = ({ children, className = "", delay = 0 }) => {
@@ -100,7 +100,10 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: "#161616" }}>
+    <div
+      className="min-h-screen overflow-x-hidden"
+      style={{ backgroundColor: "#161616" }}
+    >
       <Navbar />
 
       {/* Logo flotante arriba a la izquierda */}
@@ -108,11 +111,11 @@ export default function Home() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, delay: 0.3 }}
-        className="fixed top-4 left-4 z-50"
+        className="hidden md:block fixed top-4 left-4 z-50"
       >
-        <img 
-          src={logoImage} 
-          alt="InterRenta Logo" 
+        <img
+          src={logoImage}
+          alt="InterRenta Logo"
           className="h-16 md:h-20 w-auto drop-shadow-lg"
         />
       </motion.div>
@@ -123,14 +126,14 @@ export default function Home() {
         className="relative min-h-screen flex items-center justify-center overflow-hidden"
       >
         {/* Imagen de fondo con opacidad */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ 
+          style={{
             backgroundImage: `url(${fondoImage})`,
-            opacity: 0.5
+            opacity: 0.5,
           }}
         />
-        
+
         {/* Background animado */}
         <div
           className="absolute inset-0"
@@ -745,8 +748,8 @@ export default function Home() {
                   className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6"
                   style={{ color: "#b3b3b3" }}
                 >
-                  ¿Listo para encontrar
-                  <span className="block gradient-text">tu próximo hogar?</span>
+                  ¿Listo para encontrar{" "}
+                  <span className="gradient-text">tu próximo hogar?</span>
                 </h2>
 
                 <p
@@ -835,7 +838,8 @@ export default function Home() {
                 style={{ color: "#9ca3af" }}
               >
                 <li className="flex items-center gap-2">
-                  <span>📧</span> comercial@interrenta.com
+                  <span>📧</span>{" "}
+                  <span className="break-all">comercial@interrenta.com</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span>📞</span> +57 319 522 7378
