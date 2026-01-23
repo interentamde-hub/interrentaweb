@@ -223,7 +223,7 @@ export default function PropertyDetail() {
               {/* Botones de acción */}
               <div className="flex flex-col sm:flex-row gap-4 mt-auto">
                 <a
-                  href={`https://wa.me/573025749331?text=Hola, me interesa la propiedad ${property.code}: ${property.title}`}
+                  href={`https://wa.me/573195227378?text=Hola, me interesa la propiedad ${property.code}: ${property.title}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-semibold text-center hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
@@ -283,7 +283,7 @@ export default function PropertyDetail() {
             Contáctanos y te ayudamos con el proceso
           </p>
           <a
-            href={`https://wa.me/573025749331?text=Hola, me interesa la propiedad ${property.code}: ${property.title}. ¿Podemos agendar una visita?`}
+            href={`https://wa.me/573195227378?text=Hola, me interesa la propiedad ${property.code}: ${property.title}. ¿Podemos agendar una visita?`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 bg-green-500 text-white rounded-2xl font-semibold hover:bg-green-600 transition-colors"
