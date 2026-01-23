@@ -294,66 +294,105 @@ export default function Home() {
       {/* Propiedades - Carrusel */}
       <section
         id="propiedades"
-        className="py-16 sm:py-24"
+        className="py-16 sm:py-24 relative"
         style={{ backgroundColor: "#161616" }}
       >
+        {/* Efecto decorativo */}
+        <div
+          className="absolute top-0 left-0 w-72 h-72 rounded-full filter blur-[150px] opacity-20"
+          style={{ backgroundColor: "#ecb337" }}
+        />
+        <div
+          className="absolute bottom-0 right-0 w-72 h-72 rounded-full filter blur-[150px] opacity-20"
+          style={{ backgroundColor: "#0d4447" }}
+        />
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <AnimatedSection>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 sm:gap-6 mb-8 sm:mb-12">
-              <div>
-                <h2
-                  className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-4"
-                  style={{ color: "#b3b3b3" }}
-                >
-                  Propiedades{" "}
-                  <span style={{ color: "#ecb337" }}>disponibles</span>
-                </h2>
+            <div className="text-center mb-12 sm:mb-16">
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  backgroundColor: "rgba(236, 179, 55, 0.1)",
+                  color: "#ecb337",
+                  border: "1px solid rgba(236, 179, 55, 0.3)",
+                }}
+              >
+                🏡 Explora nuestro catálogo
+              </span>
+              <h2
+                className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+                style={{ color: "#b3b3b3" }}
+              >
+                Propiedades{" "}
+                <span style={{ color: "#ecb337" }}>disponibles</span>
+              </h2>
+              <p
+                className="max-w-2xl mx-auto mb-6"
+                style={{ color: "#9ca3af" }}
+              >
+                Encuentra el espacio perfecto para ti y tu familia
+              </p>
 
-                <p style={{ color: "#9ca3af" }}>
-                  {filteredProperties.length} propiedades encontradas
-                </p>
-              </div>
+              {/* Contador y controles */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+                <div
+                  className="px-6 py-3 rounded-2xl"
+                  style={{ backgroundColor: "#262525" }}
+                >
+                  <span
+                    className="text-2xl sm:text-3xl font-bold"
+                    style={{ color: "#ecb337" }}
+                  >
+                    {filteredProperties.length}
+                  </span>
+                  <span
+                    className="ml-2 text-sm sm:text-base"
+                    style={{ color: "#9ca3af" }}
+                  >
+                    propiedades encontradas
+                  </span>
+                </div>
 
-              {/* Controles del carrusel */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => scrollCarousel("left")}
-                  className="p-3 sm:p-4 rounded-full transition-all hover:scale-110"
-                  style={{ backgroundColor: "#262525", color: "#ecb337" }}
-                >
-                  <svg
-                    className="w-5 h-5 sm:w-6 sm:h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => scrollCarousel("left")}
+                    className="p-3 sm:p-4 rounded-full transition-all hover:scale-110"
+                    style={{ backgroundColor: "#262525", color: "#ecb337" }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => scrollCarousel("right")}
-                  className="p-3 sm:p-4 rounded-full transition-all hover:scale-110"
-                  style={{ backgroundColor: "#ecb337", color: "#161616" }}
-                >
-                  <svg
-                    className="w-5 h-5 sm:w-6 sm:h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    <svg
+                      className="w-5 h-5 sm:w-6 sm:h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => scrollCarousel("right")}
+                    className="p-3 sm:p-4 rounded-full transition-all hover:scale-110"
+                    style={{ backgroundColor: "#ecb337", color: "#161616" }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      className="w-5 h-5 sm:w-6 sm:h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </AnimatedSection>
@@ -495,6 +534,16 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <AnimatedSection>
             <div className="text-center mb-12 sm:mb-16">
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  backgroundColor: "rgba(236, 179, 55, 0.1)",
+                  color: "#ecb337",
+                  border: "1px solid rgba(236, 179, 55, 0.3)",
+                }}
+              >
+                Para propietarios
+              </span>
               <h2
                 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
                 style={{ color: "#b3b3b3" }}
@@ -580,152 +629,246 @@ export default function Home() {
       </section>
 
       {/* Nosotros */}
+      {/* Nosotros */}
       <section
         id="nosotros"
-        className="py-16 sm:py-24 px-4 sm:px-6"
+        className="py-16 sm:py-24 px-4 sm:px-6 relative overflow-hidden"
         style={{ backgroundColor: "#1a1a1a" }}
       >
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 sm:gap-16 items-center mb-16 sm:mb-20">
-            <AnimatedSection>
-              <div>
-                <h2
-                  className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6"
-                  style={{ color: "#b3b3b3" }}
-                >
-                  Más de <span style={{ color: "#ecb337" }}>10 años</span> de
-                  experiencia
-                </h2>
-                <p
-                  className="text-base sm:text-lg mb-6 sm:mb-8 leading-relaxed"
-                  style={{ color: "#9ca3af" }}
-                >
-                  En InterRenta nos especializamos en encontrar la propiedad
-                  perfecta para ti. Con un equipo de profesionales
-                  comprometidos.
-                </p>
+        {/* Decoración de fondo */}
+        <div
+          className="absolute top-0 right-0 w-96 h-96 rounded-full filter blur-[200px] opacity-10"
+          style={{ backgroundColor: "#ecb337" }}
+        />
+        <div
+          className="absolute bottom-0 left-0 w-96 h-96 rounded-full filter blur-[200px] opacity-10"
+          style={{ backgroundColor: "#0d4447" }}
+        />
 
-                <div className="space-y-3 sm:space-y-4">
-                  {[
-                    "Asesoría personalizada",
-                    "Propiedades 100% verificadas",
-                    "Proceso transparente y seguro",
-                    "Soporte legal integral",
-                  ].map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      viewport={{ once: true }}
-                      className="flex items-center gap-3 sm:gap-4"
-                    >
-                      <div
-                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#ecb337" }}
-                      >
-                        <svg
-                          className="w-4 h-4 sm:w-5 sm:h-5"
-                          style={{ color: "#161616" }}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <span
-                        className="text-sm sm:text-base"
-                        style={{ color: "#b3b3b3" }}
-                      >
-                        {item}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </AnimatedSection>
+        <div className="max-w-7xl mx-auto relative z-10">
+          {/* Header centrado */}
+          <AnimatedSection>
+            <div className="text-center mb-16 sm:mb-20">
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  backgroundColor: "rgba(236, 179, 55, 0.1)",
+                  color: "#ecb337",
+                  border: "1px solid rgba(236, 179, 55, 0.3)",
+                }}
+              >
+                Conócenos
+              </span>
+              <h2
+                className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+                style={{ color: "#b3b3b3" }}
+              >
+                Más de <span style={{ color: "#ecb337" }}>10 años</span> creando
+                hogares
+              </h2>
+              <p className="max-w-2xl mx-auto" style={{ color: "#9ca3af" }}>
+                En InterRenta nos especializamos en encontrar la propiedad
+                perfecta para ti
+              </p>
+            </div>
+          </AnimatedSection>
 
-            <AnimatedSection delay={0.2}>
-              <div className="relative">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.3 }}
-                  className="aspect-square rounded-2xl sm:rounded-3xl overflow-hidden relative flex items-center justify-center"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgba(236,179,55,0.2), rgba(110,60,27,0.2))",
-                  }}
-                >
-                  {aboutImage ? (
-                    <img
-                      src={aboutImage}
-                      alt="InterRenta - Experiencia inmobiliaria"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
+          {/* Grid principal: Imagen + Beneficios */}
+          <div className="grid lg:grid-cols-5 gap-8 sm:gap-12 items-center mb-16 sm:mb-20">
+            {/* Imagen grande */}
+            <AnimatedSection className="lg:col-span-3">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+                className="aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden relative"
+                style={{ backgroundColor: "#262525" }}
+              >
+                {aboutImage ? (
+                  <img
+                    src={aboutImage}
+                    alt="InterRenta - Experiencia inmobiliaria"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
                     <span className="text-9xl">🏠</span>
-                  )}
-                </motion.div>
+                  </div>
+                )}
+                {/* Overlay con estadística */}
+                <div
+                  className="absolute bottom-4 left-4 right-4 p-4 sm:p-6 rounded-xl sm:rounded-2xl backdrop-blur-sm"
+                  style={{ backgroundColor: "rgba(22, 22, 22, 0.9)" }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div
+                        className="text-2xl sm:text-3xl font-bold"
+                        style={{ color: "#ecb337" }}
+                      >
+                        10/10
+                      </div>
+                      <div className="text-sm" style={{ color: "#9ca3af" }}>
+                        Acompañamiento
+                      </div>
+                    </div>
+                    <div
+                      className="w-px h-12"
+                      style={{ backgroundColor: "#3a3a3a" }}
+                    />
+                    <div>
+                      <div
+                        className="text-2xl sm:text-3xl font-bold"
+                        style={{ color: "#ecb337" }}
+                      >
+                        +10
+                      </div>
+                      <div className="text-sm" style={{ color: "#9ca3af" }}>
+                        Años de experiencia
+                      </div>
+                    </div>
+                    <div
+                      className="w-px h-12 hidden sm:block"
+                      style={{ backgroundColor: "#3a3a3a" }}
+                    />
+                    <div className="hidden sm:block">
+                      <div
+                        className="text-2xl sm:text-3xl font-bold"
+                        style={{ color: "#ecb337" }}
+                      >
+                        100%
+                      </div>
+                      <div className="text-sm" style={{ color: "#9ca3af" }}>
+                        Compromiso
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatedSection>
+
+            {/* Lista de beneficios */}
+            <AnimatedSection delay={0.2} className="lg:col-span-2">
+              <div className="space-y-4">
+                {[
+                  {
+                    icon: "✓",
+                    title: "Asesoría personalizada",
+                    desc: "Te guiamos en cada paso del proceso",
+                  },
+                  {
+                    icon: "✓",
+                    title: "Propiedades verificadas",
+                    desc: "100% confiables y documentadas",
+                  },
+                  {
+                    icon: "✓",
+                    title: "Proceso transparente",
+                    desc: "Sin letras pequeñas ni sorpresas",
+                  },
+                  {
+                    icon: "✓",
+                    title: "Soporte legal integral",
+                    desc: "Respaldo jurídico en cada transacción",
+                  },
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    viewport={{ once: true }}
+                    whileHover={{ x: 5 }}
+                    className="p-4 sm:p-5 rounded-xl sm:rounded-2xl transition-all"
+                    style={{ backgroundColor: "#262525" }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: "rgba(236, 179, 55, 0.2)" }}
+                      >
+                        <span
+                          style={{ color: "#ecb337" }}
+                          className="font-bold"
+                        >
+                          {item.icon}
+                        </span>
+                      </div>
+                      <div>
+                        <h4
+                          className="font-bold mb-1"
+                          style={{ color: "#b3b3b3" }}
+                        >
+                          {item.title}
+                        </h4>
+                        <p className="text-sm" style={{ color: "#9ca3af" }}>
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             </AnimatedSection>
           </div>
 
-          {/* Misión, Visión y Valores */}
-          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
-            {[
-              {
-                icon: "🎯",
-                title: "Misión",
-                text: "Brindar soluciones integrales de renta y gestión, ofreciendo un servicio confiable y transparente.",
-              },
-              {
-                icon: "🚀",
-                title: "Visión",
-                text: "Ser una empresa líder y reconocida por la excelencia en nuestros servicios de renta y gestión.",
-              },
-              {
-                icon: "💎",
-                title: "Valores",
-                text: "Responsabilidad, Transparencia, Compromiso, Confianza, Calidad e Innovación.",
-              },
-            ].map((item, i) => (
-              <AnimatedSection key={i} delay={i * 0.1}>
-                <motion.div
-                  whileHover={{ y: -5 }}
-                  className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl h-full"
-                  style={{
-                    backgroundColor: "#262525",
-                    border: "1px solid rgba(236, 179, 55, 0.2)",
-                  }}
-                >
-                  <div
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6"
-                    style={{ backgroundColor: "rgba(236, 179, 55, 0.1)" }}
+          {/* Misión, Visión y Valores - Diseño horizontal */}
+          <AnimatedSection>
+            <div
+              className="p-6 sm:p-10 rounded-2xl sm:rounded-3xl"
+              style={{
+                backgroundColor: "#262525",
+                border: "1px solid rgba(236, 179, 55, 0.1)",
+              }}
+            >
+              <div className="grid md:grid-cols-3 gap-8 sm:gap-10">
+                {[
+                  {
+                    icon: "🚩",
+                    title: "Misión",
+                    text: "Brindar soluciones integrales de renta y gestión, ofreciendo un servicio confiable y transparente.",
+                  },
+                  {
+                    icon: "🔭",
+                    title: "Visión",
+                    text: "Ser una empresa líder y reconocida por la excelencia en nuestros servicios de renta y gestión.",
+                  },
+                  {
+                    icon: "🤝🏻",
+                    title: "Valores",
+                    text: "Responsabilidad, Transparencia, Compromiso, Confianza, Calidad e Innovación.",
+                  },
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.15 }}
+                    viewport={{ once: true }}
+                    className="text-center"
                   >
-                    <span className="text-2xl sm:text-3xl">{item.icon}</span>
-                  </div>
-                  <h3
-                    className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4"
-                    style={{ color: "#ecb337" }}
-                  >
-                    {item.title}
-                  </h3>
-                  <p
-                    className="leading-relaxed text-sm sm:text-base"
-                    style={{ color: "#9ca3af" }}
-                  >
-                    {item.text}
-                  </p>
-                </motion.div>
-              </AnimatedSection>
-            ))}
-          </div>
+                    <div
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6"
+                      style={{ backgroundColor: "rgba(236, 179, 55, 0.1)" }}
+                    >
+                      <span className="text-3xl sm:text-4xl">{item.icon}</span>
+                    </div>
+                    <h3
+                      className="text-xl sm:text-2xl font-bold mb-3"
+                      style={{ color: "#ecb337" }}
+                    >
+                      {item.title}
+                    </h3>
+                    <p
+                      className="leading-relaxed text-sm sm:text-base"
+                      style={{ color: "#9ca3af" }}
+                    >
+                      {item.text}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 
