@@ -106,8 +106,11 @@ export default function PropertyDetail() {
               {property.cover_url ? (
                 <img
                   src={property.cover_url}
-                  alt={property.title}
+                  alt={`${property.title} – ${property.sector || "InterRenta"} | InterRenta`}
                   className="w-full h-full object-cover"
+                  loading="eager"
+                  decoding="async"
+                  onError={(e) => { e.target.style.display = "none"; }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
