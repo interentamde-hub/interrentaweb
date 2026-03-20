@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Bloquear rutas de administración
+Disallow: /admin-ir8x7k2m9z
+Disallow: /panel-ir8x7k2m9z
+
+# Sitemap
+Sitemap: https://www.interrenta.com/sitemap.xml

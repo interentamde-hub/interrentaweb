@@ -1,10 +1,81 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/urQ6M02.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>InterRenta - Agente Inmobiliario</title>
+    <title>InterRenta – Agencia Inmobiliaria en el Oriente Antioqueño</title>
+
+    <!-- SEO Primary -->
+    <meta name="description" content="InterRenta – Agencia inmobiliaria en el Oriente Antioqueño. Arriendos y ventas en Rionegro, Envigado, El Retiro y San Vicente de Ferrer. Más de 10 años de experiencia." />
+    <meta name="keywords" content="inmobiliaria Rionegro, arriendo Oriente Antioqueño, finca raíz El Retiro, apartamentos en arriendo Envigado, agencia inmobiliaria Antioquia" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.interrenta.com/" />
+
+    <!-- Open Graph (WhatsApp, Facebook, LinkedIn) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.interrenta.com/" />
+    <meta property="og:site_name" content="InterRenta" />
+    <meta property="og:title" content="InterRenta – Agencia Inmobiliaria en el Oriente Antioqueño" />
+    <meta property="og:description" content="Arriendos y ventas en Rionegro, Envigado, El Retiro y San Vicente de Ferrer. Más de 10 años conectando familias con su hogar ideal." />
+    <meta property="og:image" content="https://www.interrenta.com/og-image.jpg" />
+    <meta property="og:locale" content="es_CO" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="InterRenta – Agencia Inmobiliaria en el Oriente Antioqueño" />
+    <meta name="twitter:description" content="Arriendos y ventas en Rionegro, Envigado, El Retiro y San Vicente de Ferrer. Más de 10 años de experiencia." />
+    <meta name="twitter:image" content="https://www.interrenta.com/og-image.jpg" />
+
+    <!-- Schema Markup: LocalBusiness + RealEstateAgent -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": ["RealEstateAgent", "LocalBusiness"],
+          "@id": "https://www.interrenta.com/#organization",
+          "name": "InterRenta",
+          "url": "https://www.interrenta.com",
+          "logo": "https://www.interrenta.com/urQ6M02.svg",
+          "description": "Agencia inmobiliaria con más de 10 años de experiencia en el Oriente Antioqueño. Arriendos y ventas en Rionegro, Envigado, El Retiro y San Vicente de Ferrer.",
+          "telephone": "+573195227378",
+          "email": "comercial@interrenta.com",
+          "address": {
+            "@type": "PostalAddress",
+            "addressRegion": "Antioquia",
+            "addressCountry": "CO",
+            "addressLocality": "Rionegro"
+          },
+          "areaServed": [
+            { "@type": "City", "name": "Rionegro" },
+            { "@type": "City", "name": "Envigado" },
+            { "@type": "City", "name": "El Retiro" },
+            { "@type": "City", "name": "San Vicente de Ferrer" }
+          ],
+          "sameAs": [],
+          "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            "opens": "08:00",
+            "closes": "18:00"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.interrenta.com/#website",
+          "url": "https://www.interrenta.com",
+          "name": "InterRenta",
+          "publisher": { "@id": "https://www.interrenta.com/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://www.interrenta.com/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

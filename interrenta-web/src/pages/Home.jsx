@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { Link } from "react-router-dom";
 import { getAllProperties } from "../services/property.service";
 import Navbar from "../components/layout/Navbar";
 import PropertyCard from "../components/property/PropertyCard";
@@ -24,6 +25,161 @@ const AnimatedSection = ({ children, className = "", delay = 0 }) => {
     </motion.div>
   );
 };
+
+function LeadForm() {
+  const [form, setForm] = useState({
+    nombre: "",
+    telefono: "",
+    municipio: "",
+    tipo: "",
+  });
+  const [enviado, setEnviado] = useState(false);
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const { nombre, telefono, municipio, tipo } = form;
+    if (!nombre || !telefono || !municipio || !tipo) return;
+
+    const msg = `Hola, quiero evaluar mi propiedad de forma gratuita.
+- Nombre: ${nombre}
+- Teléfono: ${telefono}
+- Municipio: ${municipio}
+- Tipo de propiedad: ${tipo}`;
+
+    window.open(
+      `https://wa.me/573195227378?text=${encodeURIComponent(msg)}`,
+      "_blank"
+    );
+    setEnviado(true);
+  };
+
+  const inputStyle = {
+    backgroundColor: "#262525",
+    border: "1px solid rgba(236, 179, 55, 0.2)",
+    color: "#b3b3b3",
+    borderRadius: "0.75rem",
+    padding: "0.875rem 1.25rem",
+    width: "100%",
+    fontSize: "0.95rem",
+    outline: "none",
+  };
+
+  const labelStyle = {
+    display: "block",
+    marginBottom: "0.375rem",
+    fontSize: "0.85rem",
+    fontWeight: 600,
+    color: "#9ca3af",
+  };
+
+  if (enviado) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center py-16 px-8 rounded-2xl"
+        style={{ backgroundColor: "#262525", border: "1px solid rgba(236, 179, 55, 0.2)" }}
+      >
+        <div className="text-5xl mb-4">🎉</div>
+        <h3 className="text-xl font-bold mb-2" style={{ color: "#b3b3b3" }}>
+          ¡Gracias, {form.nombre}!
+        </h3>
+        <p style={{ color: "#9ca3af" }}>
+          Te redirigimos a WhatsApp para completar la evaluación. Nuestro equipo te responderá pronto.
+        </p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="p-6 sm:p-10 rounded-2xl sm:rounded-3xl"
+      style={{
+        backgroundColor: "#262525",
+        border: "1px solid rgba(236, 179, 55, 0.15)",
+      }}
+    >
+      <div className="grid sm:grid-cols-2 gap-5 mb-5">
+        <div>
+          <label style={labelStyle}>Nombre completo</label>
+          <input
+            type="text"
+            name="nombre"
+            placeholder="Tu nombre"
+            value={form.nombre}
+            onChange={handleChange}
+            required
+            style={inputStyle}
+          />
+        </div>
+        <div>
+          <label style={labelStyle}>Teléfono / WhatsApp</label>
+          <input
+            type="tel"
+            name="telefono"
+            placeholder="3xx xxx xxxx"
+            value={form.telefono}
+            onChange={handleChange}
+            required
+            style={inputStyle}
+          />
+        </div>
+        <div>
+          <label style={labelStyle}>Municipio</label>
+          <select
+            name="municipio"
+            value={form.municipio}
+            onChange={handleChange}
+            required
+            style={inputStyle}
+          >
+            <option value="">Selecciona un municipio</option>
+            <option value="Rionegro">Rionegro</option>
+            <option value="Envigado">Envigado</option>
+            <option value="El Retiro">El Retiro</option>
+            <option value="San Vicente de Ferrer">San Vicente de Ferrer</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>Tipo de propiedad</label>
+          <select
+            name="tipo"
+            value={form.tipo}
+            onChange={handleChange}
+            required
+            style={inputStyle}
+          >
+            <option value="">Selecciona el tipo</option>
+            <option value="Apartamento">Apartamento</option>
+            <option value="Casa">Casa</option>
+            <option value="Finca">Finca</option>
+            <option value="Local comercial">Local comercial</option>
+            <option value="Lote">Lote</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        className="w-full py-4 rounded-xl font-bold text-base transition-all hover:scale-[1.02] hover:opacity-90"
+        style={{ backgroundColor: "#ecb337", color: "#161616" }}
+      >
+        Solicitar evaluación gratuita →
+      </button>
+
+      <p className="text-center text-xs mt-3" style={{ color: "#6b7280" }}>
+        Te redirigiremos a WhatsApp para completar la solicitud. Sin spam, sin compromisos.
+      </p>
+    </form>
+  );
+}
 
 export default function Home() {
   const [properties, setProperties] = useState([]);
@@ -468,6 +624,218 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Municipios */}
+      <section
+        className="py-16 sm:py-24 px-4 sm:px-6"
+        style={{ backgroundColor: "#1a1a1a" }}
+      >
+        <div className="max-w-7xl mx-auto">
+          <AnimatedSection>
+            <div className="text-center mb-12 sm:mb-16">
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  backgroundColor: "rgba(236, 179, 55, 0.1)",
+                  color: "#ecb337",
+                  border: "1px solid rgba(236, 179, 55, 0.3)",
+                }}
+              >
+                📍 Nuestra cobertura
+              </span>
+              <h2
+                className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+                style={{ color: "#b3b3b3" }}
+              >
+                Encuentra tu hogar por{" "}
+                <span style={{ color: "#ecb337" }}>municipio</span>
+              </h2>
+              <p className="max-w-2xl mx-auto" style={{ color: "#9ca3af" }}>
+                Conocemos el Oriente Antioqueño como nadie. Explora propiedades por zona
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              { slug: "rionegro", nombre: "Rionegro", emoji: "🏙️", desc: "Ciudad aeropuerto, conjuntos y comercio" },
+              { slug: "envigado", nombre: "Envigado", emoji: "🌿", desc: "Calidad de vida y conectividad" },
+              { slug: "el-retiro", nombre: "El Retiro", emoji: "🏡", desc: "Segmento premium y naturaleza" },
+              { slug: "san-vicente", nombre: "San Vicente", emoji: "🌄", desc: "Fincas y vida campestre" },
+            ].map((m, i) => (
+              <AnimatedSection key={m.slug} delay={i * 0.1}>
+                <Link to={`/${m.slug}`}>
+                  <motion.div
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl text-center transition-all duration-300 cursor-pointer group"
+                    style={{
+                      backgroundColor: "#262525",
+                      border: "1px solid rgba(236, 179, 55, 0.1)",
+                    }}
+                  >
+                    <div className="text-4xl sm:text-5xl mb-3">{m.emoji}</div>
+                    <div
+                      className="text-base sm:text-lg font-bold mb-1 group-hover:text-[#ecb337] transition-colors"
+                      style={{ color: "#b3b3b3" }}
+                    >
+                      {m.nombre}
+                    </div>
+                    <div className="text-xs sm:text-sm" style={{ color: "#6b7280" }}>
+                      {m.desc}
+                    </div>
+                    <div
+                      className="mt-4 text-xs font-semibold group-hover:gap-2 flex items-center justify-center gap-1 transition-all"
+                      style={{ color: "#ecb337" }}
+                    >
+                      Ver propiedades →
+                    </div>
+                  </motion.div>
+                </Link>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Formulario captación de propietarios */}
+      <section
+        className="py-16 sm:py-24 px-4 sm:px-6 relative overflow-hidden"
+        style={{ backgroundColor: "#161616" }}
+      >
+        <div
+          className="absolute bottom-0 left-0 w-96 h-96 rounded-full filter blur-[200px] opacity-10"
+          style={{ backgroundColor: "#0d4447" }}
+        />
+        <div className="max-w-3xl mx-auto relative z-10">
+          <AnimatedSection>
+            <div className="text-center mb-10 sm:mb-12">
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  backgroundColor: "rgba(236, 179, 55, 0.1)",
+                  color: "#ecb337",
+                  border: "1px solid rgba(236, 179, 55, 0.3)",
+                }}
+              >
+                🏠 ¿Tienes una propiedad?
+              </span>
+              <h2
+                className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+                style={{ color: "#b3b3b3" }}
+              >
+                Evalúa tu propiedad{" "}
+                <span style={{ color: "#ecb337" }}>gratis</span>
+              </h2>
+              <p className="max-w-xl mx-auto" style={{ color: "#9ca3af" }}>
+                Cuéntanos sobre tu inmueble y te contactamos en menos de 24 horas con una valoración sin costo
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.15}>
+            <LeadForm />
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* Testimonios */}
+      <section
+        className="py-16 sm:py-24 px-4 sm:px-6 relative overflow-hidden"
+        style={{ backgroundColor: "#161616" }}
+      >
+        <div
+          className="absolute top-0 right-0 w-72 h-72 rounded-full filter blur-[150px] opacity-10"
+          style={{ backgroundColor: "#ecb337" }}
+        />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <AnimatedSection>
+            <div className="text-center mb-12 sm:mb-16">
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  backgroundColor: "rgba(236, 179, 55, 0.1)",
+                  color: "#ecb337",
+                  border: "1px solid rgba(236, 179, 55, 0.3)",
+                }}
+              >
+                ⭐ Lo que dicen nuestros clientes
+              </span>
+              <h2
+                className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+                style={{ color: "#b3b3b3" }}
+              >
+                Familias que{" "}
+                <span style={{ color: "#ecb337" }}>confían en nosotros</span>
+              </h2>
+            </div>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+            {[
+              {
+                name: "Daniela Restrepo",
+                location: "Rionegro",
+                type: "Arriendo",
+                text: "Encontramos el apartamento perfecto en menos de dos semanas. El proceso fue transparente y el equipo nos acompañó en cada paso.",
+                stars: 5,
+              },
+              {
+                name: "Carlos Mejía",
+                location: "El Retiro",
+                type: "Venta",
+                text: "Vendí mi casa en tiempo récord y al precio que esperaba. InterRenta conoce muy bien el mercado del Oriente Antioqueño.",
+                stars: 5,
+              },
+              {
+                name: "Marcela Gómez",
+                location: "Envigado",
+                type: "Arriendo",
+                text: "Como propietaria, me da mucha tranquilidad saber que mi propiedad está en buenas manos. Excelente comunicación y gestión.",
+                stars: 5,
+              },
+            ].map((t, i) => (
+              <AnimatedSection key={i} delay={i * 0.15}>
+                <motion.div
+                  whileHover={{ y: -5 }}
+                  className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col gap-4"
+                  style={{
+                    backgroundColor: "#262525",
+                    border: "1px solid rgba(236, 179, 55, 0.1)",
+                  }}
+                >
+                  <div className="flex gap-1">
+                    {Array.from({ length: t.stars }).map((_, s) => (
+                      <span key={s} style={{ color: "#ecb337" }}>★</span>
+                    ))}
+                  </div>
+                  <p
+                    className="leading-relaxed text-sm sm:text-base flex-1"
+                    style={{ color: "#9ca3af" }}
+                  >
+                    "{t.text}"
+                  </p>
+                  <div className="flex items-center gap-3 pt-2" style={{ borderTop: "1px solid #3a3a3a" }}>
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+                      style={{ backgroundColor: "rgba(236, 179, 55, 0.2)", color: "#ecb337" }}
+                    >
+                      {t.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm" style={{ color: "#b3b3b3" }}>
+                        {t.name}
+                      </div>
+                      <div className="text-xs" style={{ color: "#6b7280" }}>
+                        {t.location} · {t.type}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* SECCIÓN STATS - Reubicada después de propiedades */}
       <section
         className="py-16 sm:py-20 px-4 sm:px-6"
@@ -868,6 +1236,87 @@ export default function Home() {
                 ))}
               </div>
             </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* Equipo */}
+      <section
+        className="py-16 sm:py-24 px-4 sm:px-6"
+        style={{ backgroundColor: "#161616" }}
+      >
+        <div className="max-w-4xl mx-auto">
+          <AnimatedSection>
+            <div className="text-center mb-12 sm:mb-16">
+              <span
+                className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                style={{
+                  backgroundColor: "rgba(236, 179, 55, 0.1)",
+                  color: "#ecb337",
+                  border: "1px solid rgba(236, 179, 55, 0.3)",
+                }}
+              >
+                👋 Nuestro equipo
+              </span>
+              <h2
+                className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+                style={{ color: "#b3b3b3" }}
+              >
+                Personas reales,{" "}
+                <span style={{ color: "#ecb337" }}>resultados reales</span>
+              </h2>
+              <p className="max-w-xl mx-auto" style={{ color: "#9ca3af" }}>
+                Detrás de cada negocio hay un equipo comprometido con encontrar la mejor solución para ti
+              </p>
+            </div>
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.15}>
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10 p-8 sm:p-10 rounded-2xl sm:rounded-3xl"
+              style={{
+                backgroundColor: "#262525",
+                border: "1px solid rgba(236, 179, 55, 0.15)",
+              }}
+            >
+              {/* Avatar placeholder */}
+              <div
+                className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl flex items-center justify-center flex-shrink-0 text-5xl sm:text-6xl"
+                style={{ backgroundColor: "rgba(236, 179, 55, 0.1)" }}
+              >
+                🤝
+              </div>
+              <div className="text-center sm:text-left">
+                <h3
+                  className="text-xl sm:text-2xl font-bold mb-1"
+                  style={{ color: "#b3b3b3" }}
+                >
+                  Equipo InterRenta
+                </h3>
+                <p
+                  className="text-sm font-medium mb-3"
+                  style={{ color: "#ecb337" }}
+                >
+                  Agencia Inmobiliaria · Oriente Antioqueño
+                </p>
+                <p
+                  className="leading-relaxed text-sm sm:text-base mb-5"
+                  style={{ color: "#9ca3af" }}
+                >
+                  Con más de 10 años en el mercado inmobiliario del Oriente Antioqueño, nuestro equipo te acompaña desde la búsqueda hasta la firma. Conocemos Rionegro, Envigado, El Retiro y San Vicente de Ferrer como nadie.
+                </p>
+                <a
+                  href="https://wa.me/573195227378?text=Hola,%20quiero%20conocer%20más%20sobre%20InterRenta."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-105"
+                  style={{ backgroundColor: "#ecb337", color: "#161616" }}
+                >
+                  💬 Hablar con el equipo
+                </a>
+              </div>
+            </motion.div>
           </AnimatedSection>
         </div>
       </section>

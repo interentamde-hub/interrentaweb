@@ -30,6 +30,13 @@ export const getAllProperties = () =>
     .select("*")
     .order("created_at", { ascending: false });
 
+export const getPropertiesBySector = (sector) =>
+  supabase
+    .from("properties")
+    .select("*")
+    .ilike("sector", `%${sector}%`)
+    .order("created_at", { ascending: false });
+
 export const getPropertyByCode = (code) =>
   supabase.from("properties").select("*").eq("code", code).single();
 
