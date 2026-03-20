@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import PropertyDetail from './pages/PropertyDetail'
 import MunicipioPage from './pages/MunicipioPage'
 import WhatsAppFloat from './components/ui/WhatsAppFloat'
+import NotFound from './pages/NotFound'
 
 export default function App() {
   return (
@@ -30,7 +31,7 @@ export default function App() {
       <Route path="/el-retiro" element={<MunicipioPage municipio="el-retiro" />} />
       <Route path="/san-vicente" element={<MunicipioPage municipio="san-vicente" />} />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
     </>
   )
