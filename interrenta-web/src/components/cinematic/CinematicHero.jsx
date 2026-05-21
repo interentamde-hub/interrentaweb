@@ -1,23 +1,20 @@
 /**
- * CinematicHero.jsx — InterRenta v6
+ * CinematicHero.jsx — InterRenta v7 (SIN CANVAS)
  * UBICACIÓN: src/components/cinematic/CinematicHero.jsx
  *
- * Fix calidad v6:
- *  - Sin ctx.scale() — causaba mezcla de sistemas de coordenadas
- *  - canvas.width/height en píxeles FÍSICOS (×dpr)
- *  - drawImage calcula cover en píxeles FÍSICOS
- *  - imageSmoothingQuality = 'high'
- *  - getContext reutilizado (no se recrea en cada frame)
+ * Usa dos <img> alternados (double-buffer) con object-fit:cover.
+ * El navegador escala las imágenes con su motor nativo de alta calidad,
+ * igual que cualquier foto en una página web. Sin canvas, sin píxeles.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const EXT = "jpg";
+const EXT = "jpg"; // cambia a 'png' si aplica
 const FASE1_N = 61;
 const FASE2_N = 76;
-const PX_PER_FRAME = 90;
+const PX_PER_FRAME = 90; // px de scroll por frame
 
 function makeUrls(base, n) {
   return Array.from(
@@ -30,6 +27,14 @@ const F1 = makeUrls("/frames/fase1", FASE1_N);
 const F2 = makeUrls("/frames/fase2", FASE2_N);
 const ALL = [...F1, ...F2];
 const TOTAL = ALL.length; // 137
+
+// Preload de los primeros frames para que el inicio sea instantáneo
+const PRELOAD_AHEAD = 10;
+function preloadImage(src) {
+  const img = new window.Image();
+  img.src = src;
+}
+ALL.slice(0, PRELOAD_AHEAD).forEach(preloadImage);
 
 // ─── Overlays ─────────────────────────────────────────────────────────────────
 const OVS = [
@@ -86,27 +91,37 @@ const OVS = [
 const ALIGN = {
   left: {
     textAlign: "left",
-    left: "clamp(1.5rem,8%,7rem)",
+    left: "clamp(1.5rem,8vw,7rem)",
     right: "auto",
-    maxWidth: "min(52%,540px)",
+    maxWidth: "min(55%,560px)",
   },
   right: {
     textAlign: "right",
     left: "auto",
-    right: "clamp(1.5rem,8%,7rem)",
-    maxWidth: "min(52%,540px)",
+    right: "clamp(1.5rem,8vw,7rem)",
+    maxWidth: "min(55%,560px)",
   },
   center: { textAlign: "center", left: 0, right: 0, maxWidth: "100%" },
+};
+
+// Estilo compartido para ambas imágenes del double-buffer
+const IMG_STYLE = {
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  objectPosition: "center",
+  display: "block",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CinematicHero({ logoSrc }) {
   const wrapRef = useRef(null);
-  const canvasRef = useRef(null);
-  const ctxRef = useRef(null); // canvas 2d context, creado una sola vez
-  const imgs = useRef([]);
+  const imgA = useRef(null); // imagen activa
+  const imgB = useRef(null); // imagen de respaldo (double-buffer)
+  const activeRef = useRef("a"); // cuál imagen está visible
   const curFi = useRef(0);
-  const pendingFi = useRef(-1);
   const rafId = useRef(null);
   const topCache = useRef(0);
   const hCache = useRef(0);
@@ -116,90 +131,65 @@ export default function CinematicHero({ logoSrc }) {
   const [showInd, setShowInd] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // ── paint: dibuja en píxeles FÍSICOS, sin ctx.scale ─────────────────────
-  const paint = useCallback((fi) => {
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    if (!canvas || !ctx || canvas.width === 0) return;
+  // ── Swap de imagen: muestra el src en la imagen activa ───────────────────
+  // Double-buffer: mientras A muestra el frame actual,
+  // B se precarga en segundo plano. Al cambiar frame, B aparece
+  // y A se convierte en buffer oculto para el próximo frame.
+  const showFrame = useCallback((fi) => {
+    const src = ALL[fi];
+    if (!src) return;
 
-    const img = imgs.current[fi];
-    if (!img) return;
+    const a = imgA.current;
+    const b = imgB.current;
+    if (!a || !b) return;
 
-    if (img.complete && img.naturalWidth > 0) {
-      // canvas.width / canvas.height ya son píxeles físicos (CSS px × dpr)
-      const cw = canvas.width;
-      const ch = canvas.height;
-      const iw = img.naturalWidth;
-      const ih = img.naturalHeight;
-
-      // Cover: escala la imagen para cubrir todo el canvas sin deformar
-      const scale = Math.max(cw / iw, ch / ih);
-      const sw = iw * scale;
-      const sh = ih * scale;
-
-      ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+    if (activeRef.current === "a") {
+      // Carga el nuevo frame en B (invisible)
+      b.src = src;
+      b.onload = () => {
+        // Muestra B, oculta A
+        b.style.opacity = "1";
+        a.style.opacity = "0";
+        activeRef.current = "b";
+        // Precarga el siguiente frame en A
+        const next = ALL[fi + 1];
+        if (next) a.src = next;
+      };
     } else {
-      // Imagen aún no cargó → dibuja cuando esté lista
-      pendingFi.current = fi;
+      // Carga el nuevo frame en A (invisible)
+      a.src = src;
+      a.onload = () => {
+        // Muestra A, oculta B
+        a.style.opacity = "1";
+        b.style.opacity = "0";
+        activeRef.current = "a";
+        // Precarga el siguiente frame en B
+        const next = ALL[fi + 1];
+        if (next) b.src = next;
+      };
     }
   }, []);
 
-  // ── Preload ──────────────────────────────────────────────────────────────
+  // ── Inicialización: muestra el primer frame directamente ─────────────────
   useEffect(() => {
-    imgs.current = ALL.map((src, i) => {
-      const img = new window.Image();
-      img.src = src;
-      img.onload = () => {
-        // Si este frame era el pendiente, dibújalo ahora
-        if (pendingFi.current === i || (i === 0 && curFi.current === 0)) {
-          pendingFi.current = -1;
-          paint(i);
-        }
-      };
-      return img;
-    });
-  }, [paint]);
+    const a = imgA.current;
+    if (!a) return;
+    a.src = ALL[0];
+    a.style.opacity = "1";
+    // Precarga el segundo frame en B
+    const b = imgB.current;
+    if (b && ALL[1]) b.src = ALL[1];
+    // Precarga los primeros frames
+    ALL.slice(2, PRELOAD_AHEAD).forEach(preloadImage);
+  }, []);
 
-  // ── Inicializa canvas y contexto (una sola vez + resize) ─────────────────
+  // ── Detecta mobile en resize ──────────────────────────────────────────────
   useEffect(() => {
-    const resize = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const dpr = window.devicePixelRatio || 1;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-
-      // Tamaño visual (CSS)
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
-
-      // Tamaño real en píxeles físicos — aquí está el fix de calidad
-      // canvas.width = 1920 en una pantalla HD, = 3840 en retina 2x
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-
-      // Crea o reutiliza el contexto
-      // NO llamamos ctx.scale() — trabajamos directo en píxeles físicos
-      if (!ctxRef.current) {
-        ctxRef.current = canvas.getContext("2d", { alpha: false });
-      }
-      const ctx = ctxRef.current;
-
-      // Máxima calidad de interpolación
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-
-      setIsMobile(w < 768);
-
-      // Redibuja el frame actual con el nuevo tamaño
-      paint(curFi.current);
-    };
-
-    resize();
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, [paint]);
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // ── Cachea posición del contenedor ───────────────────────────────────────
   const cacheDims = useCallback(() => {
@@ -234,11 +224,14 @@ export default function CinematicHero({ logoSrc }) {
         const p = Math.max(0, Math.min(scrolled / maxScroll, 1));
         const fi = Math.min(Math.round(p * (TOTAL - 1)), TOTAL - 1);
 
-        curFi.current = fi;
-        paint(fi);
+        if (fi !== curFi.current) {
+          curFi.current = fi;
+          showFrame(fi);
+          setOv(OVS.find((o) => fi >= o.s && fi <= o.e) ?? null);
+        }
+
         setPct(p);
         setShowInd(p < 0.03);
-        setOv(OVS.find((o) => fi >= o.s && fi <= o.e) ?? null);
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -246,7 +239,7 @@ export default function CinematicHero({ logoSrc }) {
       window.removeEventListener("scroll", onScroll);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, [paint, cacheDims]);
+  }, [showFrame, cacheDims]);
 
   const totalH = TOTAL * PX_PER_FRAME + window.innerHeight;
 
@@ -261,20 +254,28 @@ export default function CinematicHero({ logoSrc }) {
           background: "#0a0a0a",
         }}
       >
-        {/* Canvas — posición absoluta, tamaño controlado por resize() */}
-        <canvas
-          ref={canvasRef}
+        {/* ── Double-buffer de imágenes (calidad nativa del navegador) ── */}
+        <img
+          ref={imgA}
+          alt=""
           aria-hidden="true"
-          style={{ display: "block", position: "absolute", top: 0, left: 0 }}
+          style={{ ...IMG_STYLE, opacity: 0, transition: "opacity 0.05s" }}
+        />
+        <img
+          ref={imgB}
+          alt=""
+          aria-hidden="true"
+          style={{ ...IMG_STYLE, opacity: 0, transition: "opacity 0.05s" }}
         />
 
-        {/* Vignette suave */}
+        {/* Vignette */}
         <div
           aria-hidden="true"
           style={{
             position: "absolute",
             inset: 0,
             pointerEvents: "none",
+            zIndex: 1,
             background:
               "radial-gradient(ellipse 130% 110% at 50% 50%, transparent 35%, rgba(0,0,0,0.45) 100%)",
           }}
@@ -288,6 +289,7 @@ export default function CinematicHero({ logoSrc }) {
             bottom: 0,
             left: 0,
             right: 0,
+            zIndex: 1,
             height: isMobile ? "25%" : "32%",
             pointerEvents: "none",
             background:
@@ -398,7 +400,7 @@ export default function CinematicHero({ logoSrc }) {
             style={{
               height: "100%",
               width: `${pct * 100}%`,
-              background: "linear-gradient(90deg,#ecb337,#f5d170)",
+              background: "linear-gradient(90deg, #ecb337, #f5d170)",
               transition: "width 0.08s linear",
               boxShadow: "0 0 8px rgba(236,179,55,0.5)",
             }}
