@@ -1,20 +1,20 @@
 /**
- * CinematicHero.jsx — InterRenta v7 (SIN CANVAS)
+ * CinematicHero.jsx — InterRenta v8
  * UBICACIÓN: src/components/cinematic/CinematicHero.jsx
  *
- * Usa dos <img> alternados (double-buffer) con object-fit:cover.
- * El navegador escala las imágenes con su motor nativo de alta calidad,
- * igual que cualquier foto en una página web. Sin canvas, sin píxeles.
+ * Enfoque: 1 <img> + preload en Image[] en memoria.
+ * Una vez precargada, img.src = url es INSTANTÁNEO desde caché.
+ * Sin canvas, sin double-buffer, sin callbacks encadenados.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const EXT = "jpg"; // cambia a 'png' si aplica
+const EXT = "jpg";
 const FASE1_N = 61;
 const FASE2_N = 76;
-const PX_PER_FRAME = 90; // px de scroll por frame
+const PX_PER_FRAME = 90;
 
 function makeUrls(base, n) {
   return Array.from(
@@ -27,14 +27,6 @@ const F1 = makeUrls("/frames/fase1", FASE1_N);
 const F2 = makeUrls("/frames/fase2", FASE2_N);
 const ALL = [...F1, ...F2];
 const TOTAL = ALL.length; // 137
-
-// Preload de los primeros frames para que el inicio sea instantáneo
-const PRELOAD_AHEAD = 10;
-function preloadImage(src) {
-  const img = new window.Image();
-  img.src = src;
-}
-ALL.slice(0, PRELOAD_AHEAD).forEach(preloadImage);
 
 // ─── Overlays ─────────────────────────────────────────────────────────────────
 const OVS = [
@@ -104,23 +96,11 @@ const ALIGN = {
   center: { textAlign: "center", left: 0, right: 0, maxWidth: "100%" },
 };
 
-// Estilo compartido para ambas imágenes del double-buffer
-const IMG_STYLE = {
-  position: "absolute",
-  inset: 0,
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  objectPosition: "center",
-  display: "block",
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CinematicHero({ logoSrc }) {
   const wrapRef = useRef(null);
-  const imgA = useRef(null); // imagen activa
-  const imgB = useRef(null); // imagen de respaldo (double-buffer)
-  const activeRef = useRef("a"); // cuál imagen está visible
+  const imgRef = useRef(null); // el único <img>
+  const pool = useRef([]); // Image[] precargadas en memoria
   const curFi = useRef(0);
   const rafId = useRef(null);
   const topCache = useRef(0);
@@ -130,60 +110,34 @@ export default function CinematicHero({ logoSrc }) {
   const [pct, setPct] = useState(0);
   const [showInd, setShowInd] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [firstReady, setFirstReady] = useState(false);
 
-  // ── Swap de imagen: muestra el src en la imagen activa ───────────────────
-  // Double-buffer: mientras A muestra el frame actual,
-  // B se precarga en segundo plano. Al cambiar frame, B aparece
-  // y A se convierte en buffer oculto para el próximo frame.
-  const showFrame = useCallback((fi) => {
-    const src = ALL[fi];
-    if (!src) return;
-
-    const a = imgA.current;
-    const b = imgB.current;
-    if (!a || !b) return;
-
-    if (activeRef.current === "a") {
-      // Carga el nuevo frame en B (invisible)
-      b.src = src;
-      b.onload = () => {
-        // Muestra B, oculta A
-        b.style.opacity = "1";
-        a.style.opacity = "0";
-        activeRef.current = "b";
-        // Precarga el siguiente frame en A
-        const next = ALL[fi + 1];
-        if (next) a.src = next;
-      };
-    } else {
-      // Carga el nuevo frame en A (invisible)
-      a.src = src;
-      a.onload = () => {
-        // Muestra A, oculta B
-        a.style.opacity = "1";
-        b.style.opacity = "0";
-        activeRef.current = "a";
-        // Precarga el siguiente frame en B
-        const next = ALL[fi + 1];
-        if (next) b.src = next;
-      };
-    }
-  }, []);
-
-  // ── Inicialización: muestra el primer frame directamente ─────────────────
+  // ── Preload: carga todos los frames en Image[] ───────────────────────────
+  // Una vez que cada Image() carga, queda en caché del navegador.
+  // Cuando después hacemos imgRef.current.src = ALL[fi], es instantáneo.
   useEffect(() => {
-    const a = imgA.current;
-    if (!a) return;
-    a.src = ALL[0];
-    a.style.opacity = "1";
-    // Precarga el segundo frame en B
-    const b = imgB.current;
-    if (b && ALL[1]) b.src = ALL[1];
-    // Precarga los primeros frames
-    ALL.slice(2, PRELOAD_AHEAD).forEach(preloadImage);
+    const images = ALL.map((src, i) => {
+      const img = new window.Image();
+      img.onload = () => {
+        // Muestra el primer frame en cuanto cargue
+        if (i === 0 && imgRef.current) {
+          imgRef.current.src = src;
+          setFirstReady(true);
+        }
+      };
+      img.src = src;
+      return img;
+    });
+    pool.current = images;
+    return () => {
+      // Limpia onload handlers al desmontar
+      images.forEach((img) => {
+        img.onload = null;
+      });
+    };
   }, []);
 
-  // ── Detecta mobile en resize ──────────────────────────────────────────────
+  // ── Detecta mobile ───────────────────────────────────────────────────────
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -224,9 +178,11 @@ export default function CinematicHero({ logoSrc }) {
         const p = Math.max(0, Math.min(scrolled / maxScroll, 1));
         const fi = Math.min(Math.round(p * (TOTAL - 1)), TOTAL - 1);
 
+        // Solo actualiza el src si cambió el frame
         if (fi !== curFi.current) {
           curFi.current = fi;
-          showFrame(fi);
+          // Swap instantáneo: la imagen ya está en caché del navegador
+          if (imgRef.current) imgRef.current.src = ALL[fi];
           setOv(OVS.find((o) => fi >= o.s && fi <= o.e) ?? null);
         }
 
@@ -234,12 +190,13 @@ export default function CinematicHero({ logoSrc }) {
         setShowInd(p < 0.03);
       });
     };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, [showFrame, cacheDims]);
+  }, [cacheDims]);
 
   const totalH = TOTAL * PX_PER_FRAME + window.innerHeight;
 
@@ -254,18 +211,23 @@ export default function CinematicHero({ logoSrc }) {
           background: "#0a0a0a",
         }}
       >
-        {/* ── Double-buffer de imágenes (calidad nativa del navegador) ── */}
+        {/* ── La única imagen — calidad nativa, sin procesamiento ───────── */}
         <img
-          ref={imgA}
+          ref={imgRef}
           alt=""
           aria-hidden="true"
-          style={{ ...IMG_STYLE, opacity: 0, transition: "opacity 0.05s" }}
-        />
-        <img
-          ref={imgB}
-          alt=""
-          aria-hidden="true"
-          style={{ ...IMG_STYLE, opacity: 0, transition: "opacity 0.05s" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center",
+            display: "block",
+            // Fade suave al aparecer el primer frame
+            opacity: firstReady ? 1 : 0,
+            transition: firstReady ? "opacity 0.4s ease" : "none",
+          }}
         />
 
         {/* Vignette */}
