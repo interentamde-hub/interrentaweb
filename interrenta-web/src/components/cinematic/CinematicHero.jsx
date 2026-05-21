@@ -1,38 +1,37 @@
 /**
- * CinematicHero.jsx — InterRenta v5
+ * CinematicHero.jsx — InterRenta v6
  * UBICACIÓN: src/components/cinematic/CinematicHero.jsx
  *
- * Mejoras v5:
- *  - devicePixelRatio: canvas dibuja a resolución nativa (sin blur en retina)
- *  - Textos: duraciones más largas, transiciones más suaves
- *  - Responsivo: tamaños de fuente, padding y logo ajustados por breakpoint
- *  - Sin panel DEBUG
+ * Fix calidad v6:
+ *  - Sin ctx.scale() — causaba mezcla de sistemas de coordenadas
+ *  - canvas.width/height en píxeles FÍSICOS (×dpr)
+ *  - drawImage calcula cover en píxeles FÍSICOS
+ *  - imageSmoothingQuality = 'high'
+ *  - getContext reutilizado (no se recrea en cada frame)
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const EXT = "jpg"; // 'png' si tus frames son .png
+const EXT = "jpg";
 const FASE1_N = 61;
 const FASE2_N = 76;
-const PX_PER_FRAME = 90; // px de scroll por frame (sube = más lento)
+const PX_PER_FRAME = 90;
 
-function urls(base, n) {
+function makeUrls(base, n) {
   return Array.from(
     { length: n },
     (_, i) => `${base}/ezgif-frame-${String(i + 1).padStart(3, "0")}.${EXT}`,
   );
 }
 
-const F1 = urls("/frames/fase1", FASE1_N);
-const F2 = urls("/frames/fase2", FASE2_N);
+const F1 = makeUrls("/frames/fase1", FASE1_N);
+const F2 = makeUrls("/frames/fase2", FASE2_N);
 const ALL = [...F1, ...F2];
 const TOTAL = ALL.length; // 137
 
 // ─── Overlays ─────────────────────────────────────────────────────────────────
-// start/end definen el rango de frames en que el texto es visible.
-// Cuanto más amplio el rango, más tiempo permanece el texto en pantalla.
 const OVS = [
   {
     id: "o1",
@@ -89,13 +88,13 @@ const ALIGN = {
     textAlign: "left",
     left: "clamp(1.5rem,8%,7rem)",
     right: "auto",
-    maxWidth: "min(52%, 540px)",
+    maxWidth: "min(52%,540px)",
   },
   right: {
     textAlign: "right",
     left: "auto",
     right: "clamp(1.5rem,8%,7rem)",
-    maxWidth: "min(52%, 540px)",
+    maxWidth: "min(52%,540px)",
   },
   center: { textAlign: "center", left: 0, right: 0, maxWidth: "100%" },
 };
@@ -104,36 +103,43 @@ const ALIGN = {
 export default function CinematicHero({ logoSrc }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
+  const ctxRef = useRef(null); // canvas 2d context, creado una sola vez
   const imgs = useRef([]);
   const curFi = useRef(0);
   const pendingFi = useRef(-1);
   const rafId = useRef(null);
   const topCache = useRef(0);
   const hCache = useRef(0);
-  const dpr = useRef(1);
 
   const [ov, setOv] = useState(OVS[0]);
   const [pct, setPct] = useState(0);
   const [showInd, setShowInd] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // ── Dibuja frame en canvas (con soporte DPR) ─────────────────────────────
+  // ── paint: dibuja en píxeles FÍSICOS, sin ctx.scale ─────────────────────
   const paint = useCallback((fi) => {
     const canvas = canvasRef.current;
-    if (!canvas || canvas.width === 0) return;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx || canvas.width === 0) return;
+
     const img = imgs.current[fi];
     if (!img) return;
 
     if (img.complete && img.naturalWidth > 0) {
-      const ctx = canvas.getContext("2d", { alpha: false });
-      // canvas.width/height ya están en píxeles físicos (multiplicados por dpr)
+      // canvas.width / canvas.height ya son píxeles físicos (CSS px × dpr)
       const cw = canvas.width;
       const ch = canvas.height;
-      const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-      const sw = img.naturalWidth * scale;
-      const sh = img.naturalHeight * scale;
+      const iw = img.naturalWidth;
+      const ih = img.naturalHeight;
+
+      // Cover: escala la imagen para cubrir todo el canvas sin deformar
+      const scale = Math.max(cw / iw, ch / ih);
+      const sw = iw * scale;
+      const sh = ih * scale;
+
       ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
     } else {
+      // Imagen aún no cargó → dibuja cuando esté lista
       pendingFi.current = fi;
     }
   }, []);
@@ -144,7 +150,8 @@ export default function CinematicHero({ logoSrc }) {
       const img = new window.Image();
       img.src = src;
       img.onload = () => {
-        if (pendingFi.current === i || i === 0) {
+        // Si este frame era el pendiente, dibújalo ahora
+        if (pendingFi.current === i || (i === 0 && curFi.current === 0)) {
           pendingFi.current = -1;
           paint(i);
         }
@@ -153,31 +160,42 @@ export default function CinematicHero({ logoSrc }) {
     });
   }, [paint]);
 
-  // ── Resize canvas con DPR ────────────────────────────────────────────────
+  // ── Inicializa canvas y contexto (una sola vez + resize) ─────────────────
   useEffect(() => {
     const resize = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      dpr.current = window.devicePixelRatio || 1;
+      const dpr = window.devicePixelRatio || 1;
       const w = window.innerWidth;
       const h = window.innerHeight;
 
-      // Tamaño CSS del canvas (lo que ocupa visualmente)
+      // Tamaño visual (CSS)
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
 
-      // Tamaño real en píxeles (multiplicado por dpr → nitidez en retina)
-      canvas.width = Math.round(w * dpr.current);
-      canvas.height = Math.round(h * dpr.current);
+      // Tamaño real en píxeles físicos — aquí está el fix de calidad
+      // canvas.width = 1920 en una pantalla HD, = 3840 en retina 2x
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
 
-      // Escala el contexto para que drawImage use coordenadas CSS
-      const ctx = canvas.getContext("2d", { alpha: false });
-      ctx.scale(dpr.current, dpr.current);
+      // Crea o reutiliza el contexto
+      // NO llamamos ctx.scale() — trabajamos directo en píxeles físicos
+      if (!ctxRef.current) {
+        ctxRef.current = canvas.getContext("2d", { alpha: false });
+      }
+      const ctx = ctxRef.current;
 
-      paint(curFi.current);
+      // Máxima calidad de interpolación
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
       setIsMobile(w < 768);
+
+      // Redibuja el frame actual con el nuevo tamaño
+      paint(curFi.current);
     };
+
     resize();
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
@@ -208,6 +226,7 @@ export default function CinematicHero({ logoSrc }) {
       if (rafId.current) cancelAnimationFrame(rafId.current);
       rafId.current = requestAnimationFrame(() => {
         if (hCache.current === 0) cacheDims();
+
         const scrolled = window.scrollY - topCache.current;
         const maxScroll = hCache.current - window.innerHeight;
         if (maxScroll <= 0) return;
@@ -242,14 +261,14 @@ export default function CinematicHero({ logoSrc }) {
           background: "#0a0a0a",
         }}
       >
-        {/* Canvas — tamaño CSS controlado por resize() */}
+        {/* Canvas — posición absoluta, tamaño controlado por resize() */}
         <canvas
           ref={canvasRef}
           aria-hidden="true"
           style={{ display: "block", position: "absolute", top: 0, left: 0 }}
         />
 
-        {/* Vignette */}
+        {/* Vignette suave */}
         <div
           aria-hidden="true"
           style={{
@@ -257,7 +276,7 @@ export default function CinematicHero({ logoSrc }) {
             inset: 0,
             pointerEvents: "none",
             background:
-              "radial-gradient(ellipse 130% 110% at 50% 50%, transparent 35%, rgba(0,0,0,0.5) 100%)",
+              "radial-gradient(ellipse 130% 110% at 50% 50%, transparent 35%, rgba(0,0,0,0.45) 100%)",
           }}
         />
 
@@ -269,10 +288,10 @@ export default function CinematicHero({ logoSrc }) {
             bottom: 0,
             left: 0,
             right: 0,
-            height: isMobile ? "28%" : "35%",
+            height: isMobile ? "25%" : "32%",
             pointerEvents: "none",
             background:
-              "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)",
+              "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)",
           }}
         />
 
@@ -291,34 +310,34 @@ export default function CinematicHero({ logoSrc }) {
               src={logoSrc}
               alt="InterRenta"
               style={{
-                height: isMobile ? 36 : 52,
+                height: isMobile ? 34 : 50,
                 width: "auto",
-                filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.75))",
+                filter: "drop-shadow(0 2px 14px rgba(0,0,0,0.8))",
               }}
             />
           </div>
         )}
 
-        {/* ── Text overlay ──────────────────────────────────────────────── */}
+        {/* Text overlay */}
         <AnimatePresence mode="wait">
           {ov && (
             <motion.div
               key={ov.id}
               initial={{
                 opacity: 0,
-                y: isMobile ? 24 : 40,
+                y: isMobile ? 20 : 36,
                 filter: "blur(12px)",
               }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               exit={{
                 opacity: 0,
-                y: isMobile ? -16 : -28,
+                y: isMobile ? -14 : -24,
                 filter: "blur(8px)",
               }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
               style={{
                 position: "absolute",
-                bottom: isMobile ? "12%" : "16%",
+                bottom: isMobile ? "11%" : "15%",
                 zIndex: 10,
                 padding: "0 1.5rem",
                 pointerEvents: "none",
@@ -328,13 +347,13 @@ export default function CinematicHero({ logoSrc }) {
               <h2
                 style={{
                   fontFamily:
-                    "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+                    "'Cormorant Garamond','Playfair Display',Georgia,serif",
                   fontSize: isMobile
-                    ? "clamp(2rem, 8vw, 2.8rem)"
-                    : "clamp(2.8rem, 5.5vw, 5.5rem)",
+                    ? "clamp(1.9rem,7.5vw,2.6rem)"
+                    : "clamp(2.8rem,5.2vw,5.4rem)",
                   fontWeight: 300,
-                  color: "rgba(255,255,255,0.93)",
-                  lineHeight: 1.08,
+                  color: "rgba(255,255,255,0.94)",
+                  lineHeight: 1.07,
                   letterSpacing: "-0.01em",
                   textShadow: "0 4px 50px rgba(0,0,0,0.7)",
                   margin: 0,
@@ -344,15 +363,15 @@ export default function CinematicHero({ logoSrc }) {
               </h2>
               <p
                 style={{
-                  fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
+                  fontFamily: "'Inter','Helvetica Neue',sans-serif",
                   fontSize: isMobile
-                    ? "0.65rem"
-                    : "clamp(0.75rem, 1.4vw, 1rem)",
+                    ? "0.62rem"
+                    : "clamp(0.72rem,1.3vw,0.95rem)",
                   fontWeight: 300,
                   color: "rgba(236,179,55,0.9)",
-                  letterSpacing: isMobile ? "0.2em" : "0.28em",
+                  letterSpacing: isMobile ? "0.18em" : "0.26em",
                   textTransform: "uppercase",
-                  marginTop: isMobile ? "0.6rem" : "1rem",
+                  marginTop: isMobile ? "0.5rem" : "0.9rem",
                   textShadow: "0 2px 24px rgba(0,0,0,0.65)",
                 }}
               >
@@ -379,7 +398,7 @@ export default function CinematicHero({ logoSrc }) {
             style={{
               height: "100%",
               width: `${pct * 100}%`,
-              background: "linear-gradient(90deg, #ecb337, #f5d170)",
+              background: "linear-gradient(90deg,#ecb337,#f5d170)",
               transition: "width 0.08s linear",
               boxShadow: "0 0 8px rgba(236,179,55,0.5)",
             }}
@@ -396,7 +415,7 @@ export default function CinematicHero({ logoSrc }) {
               transition={{ duration: 0.6 }}
               style={{
                 position: "absolute",
-                bottom: isMobile ? "2.5rem" : "3.5rem",
+                bottom: isMobile ? "2.5rem" : "3.2rem",
                 left: "50%",
                 transform: "translateX(-50%)",
                 display: "flex",
@@ -409,35 +428,35 @@ export default function CinematicHero({ logoSrc }) {
             >
               <span
                 style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: "0.58rem",
+                  fontFamily: "'Inter',sans-serif",
+                  fontSize: "0.56rem",
                   letterSpacing: "0.35em",
                   textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.38)",
+                  color: "rgba(255,255,255,0.36)",
                 }}
               >
                 Scroll
               </span>
               <motion.div
-                animate={{ y: [0, 6, 0] }}
+                animate={{ y: [0, 5, 0] }}
                 transition={{
                   duration: 1.6,
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
                 style={{
-                  width: 20,
-                  height: 32,
+                  width: 19,
+                  height: 30,
                   borderRadius: 10,
-                  border: "1.5px solid rgba(255,255,255,0.25)",
+                  border: "1.5px solid rgba(255,255,255,0.22)",
                   display: "flex",
                   justifyContent: "center",
-                  paddingTop: 6,
+                  paddingTop: 5,
                 }}
               >
                 <div
                   style={{
-                    width: 2.5,
+                    width: 2,
                     height: 6,
                     borderRadius: 2,
                     background: "rgba(236,179,55,0.6)",
@@ -448,13 +467,13 @@ export default function CinematicHero({ logoSrc }) {
           )}
         </AnimatePresence>
 
-        {/* Indicadores de fase */}
+        {/* Indicadores de fase — solo desktop */}
         {!isMobile && (
           <div
             aria-hidden="true"
             style={{
               position: "absolute",
-              bottom: "3.5rem",
+              bottom: "3.2rem",
               right: "1.5rem",
               zIndex: 10,
               pointerEvents: "none",
@@ -476,28 +495,28 @@ export default function CinematicHero({ logoSrc }) {
                     display: "flex",
                     alignItems: "center",
                     gap: "0.5rem",
-                    opacity: active ? 1 : 0.28,
+                    opacity: active ? 1 : 0.25,
                     transition: "opacity 0.5s",
                   }}
                 >
                   <span
                     style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: "0.58rem",
+                      fontFamily: "'Inter',sans-serif",
+                      fontSize: "0.56rem",
                       letterSpacing: "0.2em",
                       textTransform: "uppercase",
-                      color: active ? "#ecb337" : "rgba(255,255,255,0.5)",
+                      color: active ? "#ecb337" : "rgba(255,255,255,0.45)",
                     }}
                   >
                     {ph.label}
                   </span>
                   <div
                     style={{
-                      width: 22,
+                      width: 20,
                       height: 1.5,
                       background: active
-                        ? "linear-gradient(90deg, #ecb337, #f5d170)"
-                        : "rgba(255,255,255,0.25)",
+                        ? "linear-gradient(90deg,#ecb337,#f5d170)"
+                        : "rgba(255,255,255,0.22)",
                       transition: "background 0.5s",
                     }}
                   />
