@@ -36,8 +36,11 @@ export default function PropertyCard({ property, index = 0 }) {
         {property.cover_url ? (
           <img
             src={property.cover_url}
-            alt={property.title}
+            alt={`${property.title} – ${property.sector || "InterRenta"}`}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            loading={index < 2 ? "eager" : "lazy"}
+            decoding="async"
+            onError={(e) => { e.target.style.display = "none"; }}
           />
         ) : (
           <div
