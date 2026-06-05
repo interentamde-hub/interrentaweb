@@ -1,27 +1,29 @@
 /**
- * CinematicHero.jsx — InterRenta v10
+ * CinematicHero.jsx — InterRenta v11
  *
- * FIX CRÍTICO: createImageBitmap() decodifica cada frame como píxeles crudos
- * (~8 MB por frame × 181 = ~1.5 GB en mobile → crash).
- * Solución: new Image() — el browser almacena WebP comprimido y decodifica
- * solo al momento de ctx.drawImage(). Memoria real: ~11 MB total.
+ * Fix scroll móvil:
+ *   - totalH se fija UNA VEZ al montar (useLayoutEffect + DOM directo).
+ *     La barra de dirección mobile no genera re-renders ni recálculo.
+ *   - Canvas resize debounced 300ms — no dispara durante el scroll.
+ *   - isMobile solo afecta CSS; nunca reconstruye ScrollTrigger.
  *
- * Otros cambios:
- *  - Scroll mobile mucho más corto (40 px/frame vs 72 en desktop)
- *  - Concurrencia de carga limitada a 4 para no saturar la red mobile
- *  - scrub más rápido en mobile (0.5) para respuesta inmediata al touch
+ * Overlays rediseñados:
+ *   - Orden correcto: TÍTULO grande → regla dorada → eyebrow pequeño
+ *   - Stagger por elemento: title entra primero, rule después, sub al final
+ *   - letterSpacing se anima al entrar (0.08em → -0.02em) — efecto "snap"
+ *   - Blur + scale suaves por elemento independiente
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const TOTAL = 181;
+const TOTAL      = 181;
 const PX_DESKTOP = 72;
-const PX_MOBILE  = 38; // scroll mucho más corto en mobile
+const PX_MOBILE  = 40;
 
 function makeUrls(base) {
   return Array.from(
@@ -32,44 +34,74 @@ function makeUrls(base) {
 const DESKTOP_URLS = makeUrls("/frames/desktop");
 const MOBILE_URLS  = makeUrls("/frames/mobile");
 
-// ─── Overlays ─────────────────────────────────────────────────────────────────
+// ─── Overlays — orden visual: título → regla → subtítulo ─────────────────────
 const OVERLAYS = [
-  { id: "o1", start: 0.00, end: 0.16, title: "Donde los sueños",    sub: "toman forma",                                      align: "center" },
-  { id: "o2", start: 0.20, end: 0.38, title: "Construido con visión", sub: "cada detalle importa",                           align: "left"   },
-  { id: "o3", start: 0.42, end: 0.60, title: "La arquitectura",      sub: "como expresión de vida",                          align: "right"  },
-  { id: "o4", start: 0.63, end: 0.80, title: "Bienvenido",           sub: "a tu nuevo hogar",                                align: "center" },
-  { id: "o5", start: 0.84, end: 1.00, title: "InterRenta",           sub: "Tu aliado en bienes raíces · Oriente Antioqueño", align: "center" },
+  {
+    id: "o1",
+    start: 0.00, end: 0.18,
+    title: "El espacio\nque mereces",
+    sub: "Diseño · Confort · Vida",
+    align: "center",
+  },
+  {
+    id: "o2",
+    start: 0.22, end: 0.42,
+    title: "Construido\ncon visión",
+    sub: "Cada detalle, una decisión",
+    align: "left",
+  },
+  {
+    id: "o3",
+    start: 0.46, end: 0.64,
+    title: "Arquitectura\nque inspira",
+    sub: "Forma · Función · Elegancia",
+    align: "right",
+  },
+  {
+    id: "o4",
+    start: 0.67, end: 0.84,
+    title: "Tu hogar\nte espera",
+    sub: "Oriente Antioqueño",
+    align: "center",
+  },
+  {
+    id: "o5",
+    start: 0.87, end: 1.00,
+    title: "InterRenta",
+    sub: "Bienes Raíces · Oriente Antioqueño",
+    align: "center",
+  },
 ];
 
-const ALIGN = {
-  left:   { textAlign: "left",   paddingLeft:  "clamp(1.5rem,8vw,7rem)" },
-  right:  { textAlign: "right",  paddingRight: "clamp(1.5rem,8vw,7rem)" },
-  center: { textAlign: "center" },
+const ALIGN_WRAP = {
+  left:   { left: "clamp(1.5rem,8vw,7rem)",  right: "auto",                        maxWidth: "min(60%,580px)" },
+  right:  { left: "auto",                     right: "clamp(1.5rem,8vw,7rem)",      maxWidth: "min(60%,580px)" },
+  center: { left: "50%",                      transform: "translateX(-50%)",         maxWidth: "min(90%,720px)" },
 };
 
+// ─── Easing ───────────────────────────────────────────────────────────────────
 function smoothstep(t) {
   const c = Math.max(0, Math.min(t, 1));
   return c * c * (3 - 2 * c);
 }
 
+// ─── Canvas cover draw ────────────────────────────────────────────────────────
 function drawCover(ctx, img, cw, ch) {
   const iw = img.naturalWidth  || img.width;
   const ih = img.naturalHeight || img.height;
   if (!iw || !ih) return;
   const scale = Math.max(cw / iw, ch / ih);
-  const dw = iw * scale;
-  const dh = ih * scale;
-  ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+  ctx.drawImage(img, (cw - iw * scale) / 2, (ch - ih * scale) / 2, iw * scale, ih * scale);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CinematicHero({ logoSrc }) {
   const wrapRef        = useRef(null);
   const canvasRef      = useRef(null);
-  const overlayRefs    = useRef([]);
+  // Refs estructurados por overlay: { title, rule, sub }
+  const partRefs       = useRef(OVERLAYS.map(() => ({})));
   const progressFillRef = useRef(null);
   const scrollIndRef   = useRef(null);
-  // Pool de Image() — el browser gestiona la memoria comprimida
   const pool           = useRef([]);
   const lastFi         = useRef(-1);
   const isMobileRef    = useRef(false);
@@ -77,32 +109,17 @@ export default function CinematicHero({ logoSrc }) {
   const [firstReady, setFirstReady] = useState(false);
   const [isMobile,   setIsMobile]   = useState(false);
 
-  // ── Detect mobile ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    const check = () => {
-      const m = window.innerWidth < 768;
-      setIsMobile(m);
-      isMobileRef.current = m;
-    };
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  // ── Canvas = viewport ─────────────────────────────────────────────────────
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const resize = () => {
-      const prev = lastFi.current;
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-      if (prev >= 0) { lastFi.current = -1; drawFrame(prev); }
-    };
-    resize();
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // ── Calcula y fija la altura UNA VEZ al montar ────────────────────────────
+  // Nunca vuelve a correr — la barra del browser no genera re-renders.
+  useLayoutEffect(() => {
+    const isMob = window.innerWidth < 768;
+    isMobileRef.current = isMob;
+    setIsMobile(isMob);
+    if (wrapRef.current) {
+      const vh = window.innerHeight;
+      wrapRef.current.style.height =
+        `${TOTAL * (isMob ? PX_MOBILE : PX_DESKTOP) + vh}px`;
+    }
   }, []);
 
   // ── Dibuja un frame ───────────────────────────────────────────────────────
@@ -117,12 +134,31 @@ export default function CinematicHero({ logoSrc }) {
     drawCover(canvas.getContext("2d", { alpha: false }), img, canvas.width, canvas.height);
   }, []);
 
-  // ── Actualiza overlays + barra (puro DOM, sin estado React) ───────────────
-  const FADE = 0.04;
+  // ── Canvas = viewport (debounced para no disparar durante scroll) ─────────
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const setSize = () => {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const prev = lastFi.current;
+      if (prev >= 0) { lastFi.current = -1; drawFrame(prev); }
+    };
+    setSize();
+    let tid;
+    const onResize = () => { clearTimeout(tid); tid = setTimeout(setSize, 300); };
+    window.addEventListener("resize", onResize);
+    return () => { window.removeEventListener("resize", onResize); clearTimeout(tid); };
+  }, [drawFrame]);
+
+  // ── Stagger de overlays — anima title/rule/sub por separado ─────────────
+  const FADE = 0.045;
   const updateScene = useCallback((progress) => {
-    overlayRefs.current.forEach((el, i) => {
-      if (!el) return;
-      const { start, end } = OVERLAYS[i];
+    OVERLAYS.forEach(({ start, end }, i) => {
+      const p = partRefs.current[i];
+      if (!p) return;
+
+      // t = visibilidad del overlay (0-1)
       let t = 0;
       if (progress > start && progress < end) {
         t = Math.min(
@@ -130,88 +166,102 @@ export default function CinematicHero({ logoSrc }) {
           smoothstep((end   - progress) / FADE),
         );
       }
-      gsap.set(el, {
-        opacity: t,
-        y: 24 * (1 - t),
-        filter: t < 0.98 ? `blur(${(10 * (1 - t)).toFixed(1)}px)` : "none",
-      });
+
+      // Title — lidera la entrada con letterSpacing animado + blur + scale
+      if (p.title) {
+        const ls = t < 1 ? `${(0.08 * (1 - t) - 0.02 * t).toFixed(3)}em` : "-0.02em";
+        gsap.set(p.title, {
+          opacity: t,
+          y:      36 * (1 - t),
+          scale:  1 + 0.05 * (1 - t),
+          filter: t < 0.98 ? `blur(${(16 * (1 - t)).toFixed(1)}px)` : "none",
+          letterSpacing: ls,
+        });
+      }
+
+      // Rule — aparece cuando t > 0.35 (después del título)
+      if (p.rule) {
+        const tR = smoothstep(Math.max(0, (t - 0.35) / 0.65));
+        gsap.set(p.rule, { scaleX: tR, opacity: tR });
+      }
+
+      // Sub — aparece cuando t > 0.55 (última en llegar)
+      if (p.sub) {
+        const tS = smoothstep(Math.max(0, (t - 0.55) / 0.45));
+        gsap.set(p.sub, {
+          opacity: tS,
+          y:       14 * (1 - tS),
+          filter:  tS < 0.95 ? `blur(${(4 * (1 - tS)).toFixed(1)}px)` : "none",
+        });
+      }
     });
+
     if (progressFillRef.current)
       gsap.set(progressFillRef.current, { scaleX: progress, transformOrigin: "left center" });
     if (scrollIndRef.current)
       gsap.set(scrollIndRef.current, { opacity: progress < 0.04 ? 1 : 0 });
   }, []);
 
-  // ── Carga frames con new Image() — sin createImageBitmap ─────────────────
+  // ── Carga frames con new Image() ──────────────────────────────────────────
   useEffect(() => {
-    pool.current  = new Array(TOTAL).fill(null);
+    pool.current   = new Array(TOTAL).fill(null);
     lastFi.current = -1;
     setFirstReady(false);
 
-    const urls = isMobile ? MOBILE_URLS : DESKTOP_URLS;
+    const urls = isMobileRef.current ? MOBILE_URLS : DESKTOP_URLS;
 
     function loadOne(i) {
       return new Promise((resolve) => {
         const img = new Image();
         pool.current[i] = img;
-        img.onload = () => {
-          if (i === 0) { drawFrame(0); setFirstReady(true); }
-          resolve();
-        };
+        img.onload  = () => { if (i === 0) { drawFrame(0); setFirstReady(true); } resolve(); };
         img.onerror = resolve;
-        img.src = urls[i];
+        img.src     = urls[i];
       });
     }
 
-    // Primeros 10 frames con prioridad, luego cola de 4 concurrentes
-    const CONCUR = 4;
     let next = 10;
     function runNext() {
       if (next >= TOTAL) return;
-      const i = next++;
-      loadOne(i).then(runNext);
+      loadOne(next++).then(runNext);
     }
+    Promise.all(
+      Array.from({ length: Math.min(10, TOTAL) }, (_, i) => loadOne(i)),
+    ).then(() => { for (let c = 0; c < 4; c++) runNext(); });
+  }, [drawFrame]); // no depende de isMobile — se fija en mount
 
-    const priority = Array.from({ length: Math.min(10, TOTAL) }, (_, i) => loadOne(i));
-    Promise.all(priority).then(() => {
-      for (let c = 0; c < CONCUR; c++) runNext();
-    });
-  }, [isMobile, drawFrame]);
-
-  // ── GSAP ScrollTrigger ───────────────────────────────────────────────────
+  // ── GSAP ScrollTrigger ────────────────────────────────────────────────────
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
-
     const st = ScrollTrigger.create({
       id: "cinematic-hero",
       trigger: wrap,
       start: "top top",
       end: "bottom bottom",
-      // scrub más rápido en mobile para respuesta inmediata al touch
-      scrub: isMobileRef.current ? 0.4 : 0.9,
+      scrub: isMobileRef.current ? 0.35 : 0.85,
       onUpdate: ({ progress }) => {
         drawFrame(Math.floor(progress * (TOTAL - 1)));
         updateScene(progress);
       },
     });
-
     updateScene(0);
     return () => st.kill();
   }, [drawFrame, updateScene]);
 
-  const pxPerFrame = isMobile ? PX_MOBILE : PX_DESKTOP;
-  const totalH = TOTAL * pxPerFrame + window.innerHeight;
-
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div ref={wrapRef} style={{ height: totalH, position: "relative" }}>
+    // altura se inyecta en useLayoutEffect via DOM directo
+    <div ref={wrapRef} style={{ position: "relative" }}>
+
+      {/* Sticky viewport */}
       <div
         style={{
           position: "sticky",
           top: 0,
-          height: "100vh",
+          height: "100svh",       // svh = viewport sin address bar (fallback: 100vh)
           overflow: "hidden",
-          background: "#0a0a0a",
+          background: "#050505",
         }}
       >
         {/* Canvas */}
@@ -222,20 +272,17 @@ export default function CinematicHero({ logoSrc }) {
             inset: 0,
             display: "block",
             opacity: firstReady ? 1 : 0,
-            transition: "opacity 0.5s ease",
+            transition: "opacity 0.6s ease",
           }}
         />
 
-        {/* Vignette */}
+        {/* Vignette radial */}
         <div
           aria-hidden="true"
           style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 2,
-            pointerEvents: "none",
+            position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none",
             background:
-              "radial-gradient(ellipse 130% 110% at 50% 50%, transparent 30%, rgba(0,0,0,0.55) 100%)",
+              "radial-gradient(ellipse 140% 120% at 50% 55%, transparent 25%, rgba(0,0,0,0.6) 100%)",
           }}
         />
 
@@ -243,88 +290,111 @@ export default function CinematicHero({ logoSrc }) {
         <div
           aria-hidden="true"
           style={{
-            position: "absolute",
-            bottom: 0, left: 0, right: 0,
-            height: isMobile ? "28%" : "32%",
-            zIndex: 2,
-            pointerEvents: "none",
-            background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)",
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            height: isMobile ? "30%" : "35%", zIndex: 2, pointerEvents: "none",
+            background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)",
           }}
         />
 
         {/* Logo */}
         {logoSrc && (
-          <div
-            style={{
-              position: "absolute",
-              top:  isMobile ? "0.75rem" : "1.5rem",
-              left: isMobile ? "0.75rem" : "1.5rem",
-              zIndex: 20,
-              pointerEvents: "none",
-            }}
-          >
+          <div style={{
+            position: "absolute",
+            top:  isMobile ? "0.75rem" : "1.5rem",
+            left: isMobile ? "0.75rem" : "1.5rem",
+            zIndex: 20, pointerEvents: "none",
+          }}>
             <img
               src={logoSrc}
               alt="InterRenta"
               style={{
-                height: isMobile ? 32 : 48,
+                height: isMobile ? 30 : 46,
                 width: "auto",
-                filter: "drop-shadow(0 2px 16px rgba(0,0,0,0.9))",
+                filter: "drop-shadow(0 2px 20px rgba(0,0,0,0.95))",
               }}
             />
           </div>
         )}
 
-        {/* ── Overlays ──────────────────────────────────────────────────── */}
+        {/* ── Overlays ──────────────────────────────────────────────────────
+            Cada overlay tiene su posición fija; GSAP anima title/rule/sub.
+            El wrapper NO tiene transform propio (evita conflictos con GSAP).
+        ─────────────────────────────────────────────────────────────────── */}
         {OVERLAYS.map((ov, i) => (
           <div
             key={ov.id}
-            ref={(el) => (overlayRefs.current[i] = el)}
             style={{
               position: "absolute",
-              left: 0, right: 0,
-              bottom: isMobile ? "12%" : "14%",
-              padding: "0 clamp(1.25rem,5vw,4rem)",
+              bottom: isMobile ? "11%" : "13%",
               zIndex: 10,
               pointerEvents: "none",
-              opacity: 0,
-              willChange: "opacity, transform, filter",
-              ...ALIGN[ov.align],
+              ...ALIGN_WRAP[ov.align],
             }}
           >
-            {/* Subtítulo dorado */}
-            <p
-              style={{
-                fontFamily: "'Inter','Helvetica Neue',sans-serif",
-                fontSize: isMobile ? "0.6rem" : "clamp(0.62rem,1vw,0.8rem)",
-                fontWeight: 500,
-                color: "#ecb337",
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                marginBottom: isMobile ? "0.4rem" : "0.7rem",
-                textShadow: "0 1px 12px rgba(0,0,0,0.9)",
-              }}
-            >
-              {ov.sub}
-            </p>
-
-            {/* Título serif */}
+            {/* TÍTULO principal — serif grande */}
             <h2
+              ref={(el) => { partRefs.current[i].title = el; }}
               style={{
                 fontFamily: "'Cormorant Garamond','Playfair Display',Georgia,serif",
                 fontSize: isMobile
-                  ? "clamp(1.9rem,7.5vw,2.6rem)"
-                  : "clamp(3rem,5.2vw,5.8rem)",
+                  ? "clamp(2.1rem,8.5vw,2.9rem)"
+                  : "clamp(3.2rem,5.5vw,6.2rem)",
                 fontWeight: 300,
+                fontStyle: "normal",
                 color: "#ffffff",
-                lineHeight: 1.05,
-                letterSpacing: "-0.01em",
-                textShadow: "0 2px 40px rgba(0,0,0,0.85), 0 0 80px rgba(0,0,0,0.5)",
+                lineHeight: 1.04,
+                letterSpacing: "0.08em",
+                textShadow:
+                  "0 2px 50px rgba(0,0,0,0.9), 0 0 100px rgba(0,0,0,0.6)",
                 margin: 0,
+                whiteSpace: "pre-line",
+                opacity: 0,
+                willChange: "opacity, transform, filter, letter-spacing",
+                textAlign: ov.align === "right" ? "right"
+                         : ov.align === "left"  ? "left"
+                         : "center",
               }}
             >
               {ov.title}
             </h2>
+
+            {/* REGLA decorativa dorada */}
+            <div
+              ref={(el) => { partRefs.current[i].rule = el; }}
+              style={{
+                height: 1,
+                background: "linear-gradient(90deg, transparent, #ecb337 30%, #f5d170 50%, #ecb337 70%, transparent)",
+                margin: isMobile ? "0.7rem 0" : "1rem 0",
+                opacity: 0,
+                transform: "scaleX(0)",
+                transformOrigin: ov.align === "right"  ? "right center"
+                               : ov.align === "left"   ? "left center"
+                               : "center center",
+                willChange: "opacity, transform",
+              }}
+            />
+
+            {/* EYEBROW — pequeño, uppercase, dorado */}
+            <p
+              ref={(el) => { partRefs.current[i].sub = el; }}
+              style={{
+                fontFamily: "'Inter','Helvetica Neue',sans-serif",
+                fontSize: isMobile ? "0.58rem" : "clamp(0.6rem,0.95vw,0.78rem)",
+                fontWeight: 500,
+                color: "rgba(236,179,55,0.9)",
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                textShadow: "0 1px 16px rgba(0,0,0,0.95)",
+                margin: 0,
+                opacity: 0,
+                willChange: "opacity, transform, filter",
+                textAlign: ov.align === "right" ? "right"
+                         : ov.align === "left"  ? "left"
+                         : "center",
+              }}
+            >
+              {ov.sub}
+            </p>
           </div>
         ))}
 
@@ -332,22 +402,19 @@ export default function CinematicHero({ logoSrc }) {
         <div
           aria-hidden="true"
           style={{
-            position: "absolute",
-            bottom: 0, left: 0, right: 0,
-            height: 2,
-            background: "rgba(255,255,255,0.07)",
-            zIndex: 20,
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            height: 2, zIndex: 20,
+            background: "rgba(255,255,255,0.06)",
           }}
         >
           <div
             ref={progressFillRef}
             style={{
-              position: "absolute",
-              inset: 0,
+              position: "absolute", inset: 0,
               background: "linear-gradient(90deg,#ecb337,#f5d170)",
               transform: "scaleX(0)",
               transformOrigin: "left center",
-              boxShadow: "0 0 10px rgba(236,179,55,0.55)",
+              boxShadow: "0 0 12px rgba(236,179,55,0.6)",
             }}
           />
         </div>
@@ -368,24 +435,22 @@ export default function CinematicHero({ logoSrc }) {
             zIndex: 10,
           }}
         >
-          <span
-            style={{
-              fontFamily: "'Inter',sans-serif",
-              fontSize: "0.52rem",
-              letterSpacing: "0.38em",
-              textTransform: "uppercase",
-              color: "rgba(255,255,255,0.35)",
-            }}
-          >
+          <span style={{
+            fontFamily: "'Inter',sans-serif",
+            fontSize: "0.5rem",
+            letterSpacing: "0.4em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.28)",
+          }}>
             Scroll
           </span>
           <svg width="18" height="28" viewBox="0 0 18 28" fill="none" aria-hidden="true">
             <rect x="0.75" y="0.75" width="16.5" height="26.5" rx="8.25"
-              stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-            <rect x="8" y="4.5" width="2" height="6" rx="1" fill="rgba(236,179,55,0.6)">
-              <animate attributeName="y" values="4.5;13;4.5" dur="1.7s"
+              stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" />
+            <rect x="8" y="4.5" width="2" height="6" rx="1" fill="rgba(236,179,55,0.5)">
+              <animate attributeName="y" values="4.5;13;4.5" dur="1.8s"
                 repeatCount="indefinite" calcMode="ease" />
-              <animate attributeName="opacity" values="1;0.2;1" dur="1.7s"
+              <animate attributeName="opacity" values="0.9;0.15;0.9" dur="1.8s"
                 repeatCount="indefinite" />
             </rect>
           </svg>
