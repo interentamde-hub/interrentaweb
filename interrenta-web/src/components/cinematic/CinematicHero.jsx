@@ -1,143 +1,108 @@
 /**
- * CinematicHero.jsx — InterRenta v8
- * UBICACIÓN: src/components/cinematic/CinematicHero.jsx
- *
- * Enfoque: 1 <img> + preload en Image[] en memoria.
- * Una vez precargada, img.src = url es INSTANTÁNEO desde caché.
- * Sin canvas, sin double-buffer, sin callbacks encadenados.
+ * CinematicHero.jsx — InterRenta v9
+ * Canvas + GSAP ScrollTrigger — scroll scrubbing cinematográfico.
+ * Down = forward, up = reverse.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const EXT = "jpg";
-const FASE1_N = 61;
-const FASE2_N = 76;
-const PX_PER_FRAME = 90;
+const TOTAL = 181;
+const PX_PER_FRAME = 72;
 
-function makeUrls(base, n) {
+function makeUrls(base) {
   return Array.from(
-    { length: n },
-    (_, i) => `${base}/ezgif-frame-${String(i + 1).padStart(3, "0")}.${EXT}`,
+    { length: TOTAL },
+    (_, i) => `${base}/frame_${String(i + 1).padStart(4, "0")}.webp`,
   );
 }
 
-const F1 = makeUrls("/frames/fase1", FASE1_N);
-const F2 = makeUrls("/frames/fase2", FASE2_N);
-const ALL = [...F1, ...F2];
-const TOTAL = ALL.length; // 137
+const DESKTOP_URLS = makeUrls("/frames/desktop");
+const MOBILE_URLS = makeUrls("/frames/mobile");
 
-// ─── Overlays ─────────────────────────────────────────────────────────────────
-const OVS = [
+// ─── Overlays — título + subtítulo por ventana de progreso ───────────────────
+const OVERLAYS = [
   {
     id: "o1",
-    s: 0,
-    e: 22,
+    start: 0.0,
+    end: 0.16,
     title: "Donde los sueños",
     sub: "toman forma",
     align: "center",
   },
   {
     id: "o2",
-    s: 26,
-    e: 50,
+    start: 0.2,
+    end: 0.38,
     title: "Construido con visión",
     sub: "cada detalle importa",
     align: "left",
   },
   {
     id: "o3",
-    s: 54,
-    e: 75,
+    start: 0.42,
+    end: 0.6,
     title: "La arquitectura",
     sub: "como expresión de vida",
     align: "right",
   },
   {
     id: "o4",
-    s: 79,
-    e: 103,
+    start: 0.63,
+    end: 0.8,
     title: "Bienvenido",
     sub: "a tu nuevo hogar",
     align: "center",
   },
   {
     id: "o5",
-    s: 107,
-    e: 125,
-    title: "Cada espacio cuenta",
-    sub: "diseñado para vivir",
-    align: "left",
-  },
-  {
-    id: "o6",
-    s: 128,
-    e: TOTAL - 1,
+    start: 0.84,
+    end: 1.0,
     title: "InterRenta",
     sub: "Tu aliado en bienes raíces · Oriente Antioqueño",
     align: "center",
   },
 ];
 
+// ─── Layout — todos los overlays usan left:0/right:0; text-align posiciona ───
 const ALIGN = {
-  left: {
-    textAlign: "left",
-    left: "clamp(1.5rem,8vw,7rem)",
-    right: "auto",
-    maxWidth: "min(55%,560px)",
-  },
-  right: {
-    textAlign: "right",
-    left: "auto",
-    right: "clamp(1.5rem,8vw,7rem)",
-    maxWidth: "min(55%,560px)",
-  },
-  center: { textAlign: "center", left: 0, right: 0, maxWidth: "100%" },
+  left: { textAlign: "left", paddingLeft: "clamp(1.5rem,8vw,7rem)" },
+  right: { textAlign: "right", paddingRight: "clamp(1.5rem,8vw,7rem)" },
+  center: { textAlign: "center" },
 };
+
+// ─── Easing suavizado para el fade ───────────────────────────────────────────
+function smoothstep(t) {
+  const c = Math.max(0, Math.min(t, 1));
+  return c * c * (3 - 2 * c);
+}
+
+// ─── Dibuja bitmap cubriendo el canvas (equiv a object-fit: cover) ────────────
+function drawCover(ctx, bitmap, cw, ch) {
+  const scale = Math.max(cw / bitmap.width, ch / bitmap.height);
+  const dw = bitmap.width * scale;
+  const dh = bitmap.height * scale;
+  ctx.drawImage(bitmap, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CinematicHero({ logoSrc }) {
   const wrapRef = useRef(null);
-  const imgRef = useRef(null); // el único <img>
-  const pool = useRef([]); // Image[] precargadas en memoria
-  const curFi = useRef(0);
-  const rafId = useRef(null);
-  const topCache = useRef(0);
-  const hCache = useRef(0);
+  const canvasRef = useRef(null);
+  const overlayRefs = useRef([]);
+  const progressFillRef = useRef(null);
+  const scrollIndRef = useRef(null);
+  const bitmaps = useRef(new Array(TOTAL).fill(null));
+  const lastFi = useRef(-1);
 
-  const [ov, setOv] = useState(OVS[0]);
-  const [pct, setPct] = useState(0);
-  const [showInd, setShowInd] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
   const [firstReady, setFirstReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // ── Preload: carga todos los frames en Image[] ───────────────────────────
-  // Una vez que cada Image() carga, queda en caché del navegador.
-  // Cuando después hacemos imgRef.current.src = ALL[fi], es instantáneo.
-  useEffect(() => {
-    const images = ALL.map((src, i) => {
-      const img = new window.Image();
-      img.onload = () => {
-        // Muestra el primer frame en cuanto cargue
-        if (i === 0 && imgRef.current) {
-          imgRef.current.src = src;
-          setFirstReady(true);
-        }
-      };
-      img.src = src;
-      return img;
-    });
-    pool.current = images;
-    return () => {
-      // Limpia onload handlers al desmontar
-      images.forEach((img) => {
-        img.onload = null;
-      });
-    };
-  }, []);
-
-  // ── Detecta mobile ───────────────────────────────────────────────────────
+  // ── Detect mobile ─────────────────────────────────────────────────────────
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -145,63 +110,142 @@ export default function CinematicHero({ logoSrc }) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // ── Cachea posición del contenedor ───────────────────────────────────────
-  const cacheDims = useCallback(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    let top = 0,
-      node = el;
-    while (node) {
-      top += node.offsetTop || 0;
-      node = node.offsetParent;
-    }
-    topCache.current = top;
-    hCache.current = el.offsetHeight;
+  // ── Draw one frame on canvas ──────────────────────────────────────────────
+  const drawFrame = useCallback((fi) => {
+    const i = Math.max(0, Math.min(fi, TOTAL - 1));
+    if (i === lastFi.current) return;
+    lastFi.current = i;
+    const bmp = bitmaps.current[i];
+    if (!bmp) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d", { alpha: false });
+    drawCover(ctx, bmp, canvas.width, canvas.height);
   }, []);
 
-  useEffect(() => {
-    const t = setTimeout(cacheDims, 200);
-    return () => clearTimeout(t);
-  }, [cacheDims]);
-
-  // ── Scroll handler ───────────────────────────────────────────────────────
-  useEffect(() => {
-    const onScroll = () => {
-      if (rafId.current) cancelAnimationFrame(rafId.current);
-      rafId.current = requestAnimationFrame(() => {
-        if (hCache.current === 0) cacheDims();
-
-        const scrolled = window.scrollY - topCache.current;
-        const maxScroll = hCache.current - window.innerHeight;
-        if (maxScroll <= 0) return;
-
-        const p = Math.max(0, Math.min(scrolled / maxScroll, 1));
-        const fi = Math.min(Math.round(p * (TOTAL - 1)), TOTAL - 1);
-
-        // Solo actualiza el src si cambió el frame
-        if (fi !== curFi.current) {
-          curFi.current = fi;
-          // Swap instantáneo: la imagen ya está en caché del navegador
-          if (imgRef.current) imgRef.current.src = ALL[fi];
-          setOv(OVS.find((o) => fi >= o.s && fi <= o.e) ?? null);
+  // ── Animate overlays + progress bar (pure DOM via GSAP) ───────────────────
+  const FADE = 0.04;
+  const updateScene = useCallback(
+    (progress) => {
+      // Overlays
+      overlayRefs.current.forEach((el, i) => {
+        if (!el) return;
+        const { start, end } = OVERLAYS[i];
+        let t = 0;
+        if (progress > start && progress < end) {
+          t = Math.min(
+            smoothstep((progress - start) / FADE),
+            smoothstep((end - progress) / FADE),
+          );
         }
-
-        setPct(p);
-        setShowInd(p < 0.03);
+        gsap.set(el, {
+          opacity: t,
+          y: 26 * (1 - t),
+          filter: t < 0.98 ? `blur(${(10 * (1 - t)).toFixed(1)}px)` : "none",
+        });
       });
-    };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (rafId.current) cancelAnimationFrame(rafId.current);
+      // Progress bar
+      if (progressFillRef.current) {
+        gsap.set(progressFillRef.current, {
+          scaleX: progress,
+          transformOrigin: "left center",
+        });
+      }
+
+      // Scroll indicator fade-out
+      if (scrollIndRef.current) {
+        gsap.set(scrollIndRef.current, { opacity: progress < 0.04 ? 1 : 0 });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // ── Canvas size = viewport ────────────────────────────────────────────────
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const resize = () => {
+      const currentFi = lastFi.current;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      if (currentFi >= 0) {
+        lastFi.current = -1; // reset so drawFrame repaints after resize clears canvas
+        drawFrame(currentFi);
+      }
     };
-  }, [cacheDims]);
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, [drawFrame]);
+
+  // ── Load frames ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    bitmaps.current = new Array(TOTAL).fill(null);
+    lastFi.current = -1;
+    setFirstReady(false);
+
+    const urls = isMobile ? MOBILE_URLS : DESKTOP_URLS;
+
+    async function loadFrame(i) {
+      try {
+        const res = await fetch(urls[i]);
+        const blob = await res.blob();
+        const bmp = await createImageBitmap(blob);
+        bitmaps.current[i] = bmp;
+        if (i === 0) {
+          drawFrame(0);
+          setFirstReady(true);
+        }
+      } catch {
+        // silent: missing frame shows previous
+      }
+    }
+
+    // Load first 12 frames as priority
+    const priority = Array.from({ length: Math.min(12, TOTAL) }, (_, i) =>
+      loadFrame(i),
+    );
+
+    Promise.all(priority).then(() => {
+      // 6 concurrent loaders for the rest
+      let next = 12;
+      function loadNext() {
+        if (next >= TOTAL) return;
+        loadFrame(next++).then(loadNext);
+      }
+      for (let c = 0; c < 6; c++) loadNext();
+    });
+  }, [isMobile, drawFrame]);
+
+  // ── GSAP ScrollTrigger — scroll scrubs frames forward & backward ──────────
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+
+    const st = ScrollTrigger.create({
+      id: "cinematic-hero",
+      trigger: wrap,
+      start: "top top",
+      end: "bottom bottom",
+      scrub: 0.9,
+      onUpdate: ({ progress }) => {
+        drawFrame(Math.floor(progress * (TOTAL - 1)));
+        updateScene(progress);
+      },
+    });
+
+    updateScene(0);
+
+    return () => st.kill();
+  }, [drawFrame, updateScene]);
 
   const totalH = TOTAL * PX_PER_FRAME + window.innerHeight;
 
   return (
     <div ref={wrapRef} style={{ height: totalH, position: "relative" }}>
+      {/* Sticky viewport — se queda en top:0 mientras se scrollea el wrapper */}
       <div
         style={{
           position: "sticky",
@@ -211,35 +255,28 @@ export default function CinematicHero({ logoSrc }) {
           background: "#0a0a0a",
         }}
       >
-        {/* ── La única imagen — calidad nativa, sin procesamiento ───────── */}
-        <img
-          ref={imgRef}
-          alt=""
-          aria-hidden="true"
+        {/* ── Canvas principal ─────────────────────────────────────────── */}
+        <canvas
+          ref={canvasRef}
           style={{
             position: "absolute",
             inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center",
             display: "block",
-            // Fade suave al aparecer el primer frame
             opacity: firstReady ? 1 : 0,
-            transition: firstReady ? "opacity 0.4s ease" : "none",
+            transition: "opacity 0.5s ease",
           }}
         />
 
-        {/* Vignette */}
+        {/* Vignette radial */}
         <div
           aria-hidden="true"
           style={{
             position: "absolute",
             inset: 0,
+            zIndex: 2,
             pointerEvents: "none",
-            zIndex: 1,
             background:
-              "radial-gradient(ellipse 130% 110% at 50% 50%, transparent 35%, rgba(0,0,0,0.45) 100%)",
+              "radial-gradient(ellipse 130% 110% at 50% 50%, transparent 30%, rgba(0,0,0,0.52) 100%)",
           }}
         />
 
@@ -251,11 +288,11 @@ export default function CinematicHero({ logoSrc }) {
             bottom: 0,
             left: 0,
             right: 0,
-            zIndex: 1,
-            height: isMobile ? "25%" : "32%",
+            height: isMobile ? "24%" : "32%",
+            zIndex: 2,
             pointerEvents: "none",
             background:
-              "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)",
+              "linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%)",
           }}
         />
 
@@ -266,7 +303,7 @@ export default function CinematicHero({ logoSrc }) {
               position: "absolute",
               top: isMobile ? "0.75rem" : "1.5rem",
               left: isMobile ? "0.75rem" : "1.5rem",
-              zIndex: 10,
+              zIndex: 20,
               pointerEvents: "none",
             }}
           >
@@ -276,76 +313,70 @@ export default function CinematicHero({ logoSrc }) {
               style={{
                 height: isMobile ? 34 : 50,
                 width: "auto",
-                filter: "drop-shadow(0 2px 14px rgba(0,0,0,0.8))",
+                filter: "drop-shadow(0 2px 16px rgba(0,0,0,0.9))",
               }}
             />
           </div>
         )}
 
-        {/* Text overlay */}
-        <AnimatePresence mode="wait">
-          {ov && (
-            <motion.div
-              key={ov.id}
-              initial={{
-                opacity: 0,
-                y: isMobile ? 20 : 36,
-                filter: "blur(12px)",
-              }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{
-                opacity: 0,
-                y: isMobile ? -14 : -24,
-                filter: "blur(8px)",
-              }}
-              transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+        {/* ── Overlay titles ────────────────────────────────────────────── */}
+        {OVERLAYS.map((ov, i) => (
+          <div
+            key={ov.id}
+            ref={(el) => (overlayRefs.current[i] = el)}
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: isMobile ? "10%" : "13%",
+              padding: "0 clamp(1.5rem,5vw,4rem)",
+              zIndex: 10,
+              pointerEvents: "none",
+              opacity: 0,
+              willChange: "opacity, transform, filter",
+              ...ALIGN[ov.align],
+            }}
+          >
+            {/* Subtítulo dorado encima */}
+            <p
               style={{
-                position: "absolute",
-                bottom: isMobile ? "11%" : "15%",
-                zIndex: 10,
-                padding: "0 1.5rem",
-                pointerEvents: "none",
-                ...ALIGN[ov.align],
+                fontFamily: "'Inter','Helvetica Neue',sans-serif",
+                fontSize: isMobile
+                  ? "0.56rem"
+                  : "clamp(0.6rem,1vw,0.78rem)",
+                fontWeight: 400,
+                color: "rgba(236,179,55,0.88)",
+                letterSpacing: "0.34em",
+                textTransform: "uppercase",
+                marginBottom: isMobile ? "0.45rem" : "0.75rem",
+                textShadow: "0 1px 14px rgba(0,0,0,0.75)",
               }}
             >
-              <h2
-                style={{
-                  fontFamily:
-                    "'Cormorant Garamond','Playfair Display',Georgia,serif",
-                  fontSize: isMobile
-                    ? "clamp(1.9rem,7.5vw,2.6rem)"
-                    : "clamp(2.8rem,5.2vw,5.4rem)",
-                  fontWeight: 300,
-                  color: "rgba(255,255,255,0.94)",
-                  lineHeight: 1.07,
-                  letterSpacing: "-0.01em",
-                  textShadow: "0 4px 50px rgba(0,0,0,0.7)",
-                  margin: 0,
-                }}
-              >
-                {ov.title}
-              </h2>
-              <p
-                style={{
-                  fontFamily: "'Inter','Helvetica Neue',sans-serif",
-                  fontSize: isMobile
-                    ? "0.62rem"
-                    : "clamp(0.72rem,1.3vw,0.95rem)",
-                  fontWeight: 300,
-                  color: "rgba(236,179,55,0.9)",
-                  letterSpacing: isMobile ? "0.18em" : "0.26em",
-                  textTransform: "uppercase",
-                  marginTop: isMobile ? "0.5rem" : "0.9rem",
-                  textShadow: "0 2px 24px rgba(0,0,0,0.65)",
-                }}
-              >
-                {ov.sub}
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {ov.sub}
+            </p>
 
-        {/* Barra de progreso */}
+            {/* Título principal serif */}
+            <h2
+              style={{
+                fontFamily:
+                  "'Cormorant Garamond','Playfair Display',Georgia,serif",
+                fontSize: isMobile
+                  ? "clamp(2rem,8vw,2.8rem)"
+                  : "clamp(3rem,5.5vw,6rem)",
+                fontWeight: 300,
+                color: "rgba(255,255,255,0.96)",
+                lineHeight: 1.04,
+                letterSpacing: "-0.015em",
+                textShadow: "0 4px 64px rgba(0,0,0,0.8)",
+                margin: 0,
+              }}
+            >
+              {ov.title}
+            </h2>
+          </div>
+        ))}
+
+        {/* ── Barra de progreso ─────────────────────────────────────────── */}
         <div
           aria-hidden="true"
           style={{
@@ -354,141 +385,91 @@ export default function CinematicHero({ logoSrc }) {
             left: 0,
             right: 0,
             height: 2,
-            background: "rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.07)",
             zIndex: 20,
           }}
         >
           <div
+            ref={progressFillRef}
             style={{
-              height: "100%",
-              width: `${pct * 100}%`,
+              position: "absolute",
+              inset: 0,
               background: "linear-gradient(90deg, #ecb337, #f5d170)",
-              transition: "width 0.08s linear",
-              boxShadow: "0 0 8px rgba(236,179,55,0.5)",
+              transform: "scaleX(0)",
+              transformOrigin: "left center",
+              boxShadow: "0 0 10px rgba(236,179,55,0.55)",
             }}
           />
         </div>
 
-        {/* Scroll indicator */}
-        <AnimatePresence>
-          {showInd && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              style={{
-                position: "absolute",
-                bottom: isMobile ? "2.5rem" : "3.2rem",
-                left: "50%",
-                transform: "translateX(-50%)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "0.5rem",
-                pointerEvents: "none",
-                zIndex: 10,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "'Inter',sans-serif",
-                  fontSize: "0.56rem",
-                  letterSpacing: "0.35em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.36)",
-                }}
-              >
-                Scroll
-              </span>
-              <motion.div
-                animate={{ y: [0, 5, 0] }}
-                transition={{
-                  duration: 1.6,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                style={{
-                  width: 19,
-                  height: 30,
-                  borderRadius: 10,
-                  border: "1.5px solid rgba(255,255,255,0.22)",
-                  display: "flex",
-                  justifyContent: "center",
-                  paddingTop: 5,
-                }}
-              >
-                <div
-                  style={{
-                    width: 2,
-                    height: 6,
-                    borderRadius: 2,
-                    background: "rgba(236,179,55,0.6)",
-                  }}
-                />
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Indicadores de fase — solo desktop */}
-        {!isMobile && (
-          <div
-            aria-hidden="true"
+        {/* ── Indicador de scroll ───────────────────────────────────────── */}
+        <div
+          ref={scrollIndRef}
+          style={{
+            position: "absolute",
+            bottom: isMobile ? "2.5rem" : "3.2rem",
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.5rem",
+            pointerEvents: "none",
+            zIndex: 10,
+          }}
+        >
+          <span
             style={{
-              position: "absolute",
-              bottom: "3.2rem",
-              right: "1.5rem",
-              zIndex: 10,
-              pointerEvents: "none",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
-              gap: "0.4rem",
+              fontFamily: "'Inter',sans-serif",
+              fontSize: "0.53rem",
+              letterSpacing: "0.38em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.3)",
             }}
           >
-            {[
-              { label: "Construcción", s: 0, e: FASE1_N },
-              { label: "Recorrido", s: FASE1_N, e: TOTAL },
-            ].map((ph) => {
-              const active = curFi.current >= ph.s && curFi.current < ph.e;
-              return (
-                <div
-                  key={ph.label}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    opacity: active ? 1 : 0.25,
-                    transition: "opacity 0.5s",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: "'Inter',sans-serif",
-                      fontSize: "0.56rem",
-                      letterSpacing: "0.2em",
-                      textTransform: "uppercase",
-                      color: active ? "#ecb337" : "rgba(255,255,255,0.45)",
-                    }}
-                  >
-                    {ph.label}
-                  </span>
-                  <div
-                    style={{
-                      width: 20,
-                      height: 1.5,
-                      background: active
-                        ? "linear-gradient(90deg,#ecb337,#f5d170)"
-                        : "rgba(255,255,255,0.22)",
-                      transition: "background 0.5s",
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
+            Scroll
+          </span>
+          {/* Mouse SVG con animación CSS */}
+          <svg
+            width="19"
+            height="30"
+            viewBox="0 0 19 30"
+            fill="none"
+            aria-hidden="true"
+          >
+            <rect
+              x="0.75"
+              y="0.75"
+              width="17.5"
+              height="28.5"
+              rx="8.75"
+              stroke="rgba(255,255,255,0.2)"
+              strokeWidth="1.5"
+            />
+            <rect
+              x="8.5"
+              y="5"
+              width="2"
+              height="7"
+              rx="1"
+              fill="rgba(236,179,55,0.55)"
+            >
+              <animate
+                attributeName="y"
+                values="5;14;5"
+                dur="1.7s"
+                repeatCount="indefinite"
+                calcMode="ease"
+              />
+              <animate
+                attributeName="opacity"
+                values="1;0.2;1"
+                dur="1.7s"
+                repeatCount="indefinite"
+              />
+            </rect>
+          </svg>
+        </div>
       </div>
     </div>
   );

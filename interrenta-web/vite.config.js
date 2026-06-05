@@ -9,8 +9,8 @@ export default defineConfig({
   assetsInclude: ["**/*.jpg", "**/*.jpeg", "**/*.png", "**/*.webp"],
 
   build: {
-    // Evita warnings de chunk size por los 137 frames
-    chunkSizeWarningLimit: 8000,
+    // Frames WebP en /public no pasan por el bundle; este límite cubre el JS
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
         assetFileNames: "assets/[name]-[hash][extname]",
