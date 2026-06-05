@@ -179,7 +179,7 @@ export default function Home() {
               <h2
                 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
                 style={{
-                  color: "#b3b3b3",
+                  color: "#e2e2e2",
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
                   fontWeight: 300,
                   letterSpacing: "-0.01em",
@@ -190,7 +190,7 @@ export default function Home() {
               </h2>
               <p
                 className="max-w-2xl mx-auto mb-8"
-                style={{ color: "#9ca3af", fontFamily: "'Inter', sans-serif" }}
+                style={{ color: "#b8bcc8", fontFamily: "'Inter', sans-serif" }}
               >
                 Encuentra el espacio perfecto para ti y tu familia
               </p>
@@ -209,7 +209,8 @@ export default function Home() {
                       backgroundColor: "rgba(38, 37, 37, 0.8)",
                       backdropFilter: "blur(20px)",
                       border: "1px solid rgba(236, 179, 55, 0.2)",
-                      color: "#b3b3b3",
+                      color: "#e2e2e2",
+                      fontSize: "16px",
                       fontFamily: "'Inter', sans-serif",
                     }}
                   />
@@ -243,7 +244,7 @@ export default function Home() {
                         filter === item.key
                           ? "#ecb337"
                           : "rgba(38, 37, 37, 0.8)",
-                      color: filter === item.key ? "#161616" : "#b3b3b3",
+                      color: filter === item.key ? "#161616" : "#d4d4d4",
                       border:
                         filter === item.key
                           ? "none"
@@ -270,7 +271,7 @@ export default function Home() {
                   </span>
                   <span
                     className="ml-2 text-sm sm:text-base"
-                    style={{ color: "#9ca3af" }}
+                    style={{ color: "#b8bcc8" }}
                   >
                     propiedades encontradas
                   </span>
@@ -337,7 +338,7 @@ export default function Home() {
           ) : filteredProperties.length === 0 ? (
             <div className="text-center py-20 px-4">
               <p className="text-6xl mb-4">🔍</p>
-              <p className="text-xl mb-4" style={{ color: "#9ca3af" }}>
+              <p className="text-xl mb-4" style={{ color: "#b8bcc8" }}>
                 No se encontraron propiedades
               </p>
               <button
@@ -445,7 +446,7 @@ export default function Home() {
                   </h3>
                   <p
                     className="text-xs sm:text-sm"
-                    style={{ color: "#9ca3af" }}
+                    style={{ color: "#b8bcc8" }}
                   >
                     {stat.subtitle}
                   </p>
@@ -484,7 +485,7 @@ export default function Home() {
               <h2
                 className="text-3xl sm:text-4xl md:text-5xl mb-4"
                 style={{
-                  color: "#b3b3b3",
+                  color: "#e2e2e2",
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
                   fontWeight: 300,
                 }}
@@ -574,7 +575,7 @@ export default function Home() {
                   <h3
                     className="text-xl sm:text-2xl font-bold mb-3"
                     style={{
-                      color: "#b3b3b3",
+                      color: "#e2e2e2",
                       fontFamily: "'Cormorant Garamond', Georgia, serif",
                       fontWeight: 400,
                     }}
@@ -584,7 +585,7 @@ export default function Home() {
                   <p
                     className="leading-relaxed"
                     style={{
-                      color: "#9ca3af",
+                      color: "#b8bcc8",
                       fontFamily: "'Inter', sans-serif",
                     }}
                   >
@@ -635,7 +636,7 @@ export default function Home() {
                     <p
                       className="text-sm sm:text-base"
                       style={{
-                        color: "#b3b3b3",
+                        color: "#e2e2e2",
                         fontFamily: "'Cormorant Garamond', Georgia, serif",
                         fontStyle: "italic",
                         fontWeight: 300,
@@ -676,7 +677,7 @@ export default function Home() {
                 <h2
                   className="text-3xl sm:text-4xl md:text-5xl mb-6"
                   style={{
-                    color: "#b3b3b3",
+                    color: "#e2e2e2",
                     fontFamily: "'Cormorant Garamond', Georgia, serif",
                     fontWeight: 300,
                     lineHeight: 1.1,
@@ -688,7 +689,7 @@ export default function Home() {
                 <p
                   className="text-base sm:text-lg mb-8 leading-relaxed"
                   style={{
-                    color: "#9ca3af",
+                    color: "#b8bcc8",
                     fontFamily: "'Inter', sans-serif",
                   }}
                 >
@@ -738,7 +739,7 @@ export default function Home() {
                         <h4
                           className="font-bold mb-1"
                           style={{
-                            color: "#b3b3b3",
+                            color: "#e2e2e2",
                             fontFamily: "'Inter', sans-serif",
                           }}
                         >
@@ -747,7 +748,7 @@ export default function Home() {
                         <p
                           className="text-sm"
                           style={{
-                            color: "#9ca3af",
+                            color: "#b8bcc8",
                             fontFamily: "'Inter', sans-serif",
                           }}
                         >
@@ -815,7 +816,7 @@ export default function Home() {
                     <p
                       className="leading-relaxed text-sm sm:text-base"
                       style={{
-                        color: "#9ca3af",
+                        color: "#b8bcc8",
                         fontFamily: "'Inter', sans-serif",
                       }}
                     >
@@ -854,7 +855,7 @@ export default function Home() {
                 <h2
                   className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6"
                   style={{
-                    color: "#b3b3b3",
+                    color: "#e2e2e2",
                     fontFamily: "'Cormorant Garamond', Georgia, serif",
                     fontWeight: 300,
                   }}
@@ -865,7 +866,7 @@ export default function Home() {
                 <p
                   className="text-lg sm:text-xl mb-8 sm:mb-10 max-w-2xl mx-auto"
                   style={{
-                    color: "#9ca3af",
+                    color: "#b8bcc8",
                     fontFamily: "'Inter', sans-serif",
                   }}
                 >
@@ -916,7 +917,7 @@ export default function Home() {
               </h3>
               <p
                 className="text-sm sm:text-base mb-4 sm:mb-6"
-                style={{ color: "#9ca3af" }}
+                style={{ color: "#b8bcc8" }}
               >
                 Tu socio de confianza en bienes raíces.
               </p>
@@ -931,7 +932,7 @@ export default function Home() {
               </h4>
               <ul
                 className="space-y-2 sm:space-y-3 text-sm sm:text-base"
-                style={{ color: "#9ca3af" }}
+                style={{ color: "#b8bcc8" }}
               >
                 <li>
                   <a
@@ -961,7 +962,7 @@ export default function Home() {
               </h4>
               <ul
                 className="space-y-2 sm:space-y-3 text-sm sm:text-base"
-                style={{ color: "#9ca3af" }}
+                style={{ color: "#b8bcc8" }}
               >
                 <li className="flex items-center gap-2">
                   <svg

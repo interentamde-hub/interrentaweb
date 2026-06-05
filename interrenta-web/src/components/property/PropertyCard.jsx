@@ -140,7 +140,7 @@ export default function PropertyCard({ property, index = 0 }) {
 
         <h3
           className="text-xl font-bold mb-2 line-clamp-1 group-hover:text-[#d7af4d] transition-colors"
-          style={{ color: "#b3b3b3" }}
+          style={{ color: "#e2e2e2" }}
         >
           {property.title}
         </h3>
@@ -148,7 +148,7 @@ export default function PropertyCard({ property, index = 0 }) {
         {(property.sector || property.address) && (
           <p
             className="text-sm mb-4 flex items-center gap-1 line-clamp-1"
-            style={{ color: "#9ca3af" }}
+            style={{ color: "#b8bcc8" }}
           >
             <svg
               className="w-4 h-4 flex-shrink-0"
@@ -177,7 +177,7 @@ export default function PropertyCard({ property, index = 0 }) {
         {/* Características */}
         <div
           className="flex items-center gap-4 mb-4 text-sm"
-          style={{ color: "#9ca3af" }}
+          style={{ color: "#b8bcc8" }}
         >
           {property.bedrooms && (
             <div className="flex items-center gap-1">
@@ -209,7 +209,7 @@ export default function PropertyCard({ property, index = 0 }) {
               ${property.price?.toLocaleString()}
             </span>
             {property.contract_type === "arriendo" && (
-              <span className="text-sm ml-1" style={{ color: "#9ca3af" }}>
+              <span className="text-sm ml-1" style={{ color: "#b8bcc8" }}>
                 /mes
               </span>
             )}
