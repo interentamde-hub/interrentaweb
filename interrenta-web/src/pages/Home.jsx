@@ -24,7 +24,8 @@ import CinematicHero from "../components/cinematic/CinematicHero";
 import StatsCounter from "../components/sections/StatsCounter";
 import ZonesSection from "../components/sections/ZonesSection";
 import HowItWorks from "../components/sections/HowItWorks";
-import aboutImage from "../assets/familia.png";
+import AssistantChat from "../components/chat/AssistantChat";
+import AISearchBar from "../components/chat/AISearchBar";
 import logoImage from "../assets/LogointerrentaTransparente.png";
 
 // ── Fuentes premium (inyectadas una sola vez) ─────────────────────────────────
@@ -63,7 +64,17 @@ export default function Home() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSearchTerm, setActiveSearchTerm] = useState("");
+  const [assistantQuery, setAssistantQuery] = useState(null);
   const carouselRef = useRef(null);
+
+  // Envía la consulta al asistente y hace scroll suave hasta él.
+  const askAssistant = useCallback((text) => {
+    setAssistantQuery({ text, nonce: Date.now() });
+    setTimeout(() => {
+      const el = document.getElementById("asistente");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 60);
+  }, []);
 
   // Inyectar fuentes
   useEffect(() => {
@@ -141,6 +152,11 @@ export default function Home() {
           REVEAL — Transición suave después del scrollytelling
       ════════════════════════════════════════════════════════════════════ */}
       <RevealDivider />
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECCIÓN — BUSCADOR CON IA ("Describe lo que buscas")
+      ════════════════════════════════════════════════════════════════════ */}
+      <AISearchBar onSubmit={askAssistant} />
 
       {/* ═══════════════════════════════════════════════════════════════════
           SECCIÓN 2 — PROPIEDADES (carrusel + búsqueda)
@@ -621,51 +637,15 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 sm:gap-16 items-center">
-            {/* Imagen */}
+            {/* Asistente IA — reemplaza la imagen estática */}
             <AnimatedSection>
-              <div className="relative">
+              <div id="asistente" className="relative" style={{ scrollMarginTop: "90px" }}>
                 <div
-                  className="absolute -inset-4 rounded-3xl opacity-30 blur-2xl"
-                  style={{
-                    background: "linear-gradient(135deg, #ecb337, #0d4447)",
-                  }}
+                  className="absolute -inset-4 rounded-3xl opacity-25 blur-2xl pointer-events-none"
+                  style={{ background: "linear-gradient(135deg, #ecb337, #0d4447)" }}
                 />
-                <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden">
-                  <img
-                    src={aboutImage}
-                    alt="El equipo de InterRenta"
-                    className="w-full object-cover"
-                    style={{ aspectRatio: "4/3" }}
-                  />
-                  {/* Glass badge */}
-                  <div
-                    className="absolute bottom-6 left-6 right-6 p-4 sm:p-5 rounded-xl sm:rounded-2xl"
-                    style={{
-                      background: "rgba(22,22,22,0.85)",
-                      backdropFilter: "blur(16px)",
-                      border: "1px solid rgba(236,179,55,0.2)",
-                    }}
-                  >
-                    <p
-                      className="text-sm sm:text-base"
-                      style={{
-                        color: "#e2e2e2",
-                        fontFamily: "'Cormorant Garamond', Georgia, serif",
-                        fontStyle: "italic",
-                        fontWeight: 300,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      "Tu hogar es nuestra misión. Cada propiedad, una
-                      historia."
-                    </p>
-                    <p
-                      className="mt-2 text-xs"
-                      style={{ color: "#ecb337", letterSpacing: "0.1em" }}
-                    >
-                      — Equipo InterRenta
-                    </p>
-                  </div>
+                <div className="relative">
+                  <AssistantChat externalQuery={assistantQuery} />
                 </div>
               </div>
             </AnimatedSection>
