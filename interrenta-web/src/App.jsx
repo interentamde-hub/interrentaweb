@@ -9,6 +9,7 @@ import WhatsAppFloat from './components/ui/WhatsAppFloat'
 import CustomCursor from './components/ui/CustomCursor'
 import BrandPreloader from './components/ui/BrandPreloader'
 import RouteTransition from './components/ui/RouteTransition'
+import AssistantWidget from './components/chat/AssistantWidget'
 import NotFound from './pages/NotFound'
 import logo from './assets/LogointerrentaTransparente.png'
 
@@ -19,6 +20,7 @@ export default function App() {
     <RouteTransition logoSrc={logo} />
     <CustomCursor />
     <WhatsAppFloat />
+    <AssistantWidget />
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/propiedades/:code" element={<PropertyDetail />} />

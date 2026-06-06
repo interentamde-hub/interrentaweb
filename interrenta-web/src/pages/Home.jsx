@@ -24,8 +24,8 @@ import CinematicHero from "../components/cinematic/CinematicHero";
 import StatsCounter from "../components/sections/StatsCounter";
 import ZonesSection from "../components/sections/ZonesSection";
 import HowItWorks from "../components/sections/HowItWorks";
-import AssistantChat from "../components/chat/AssistantChat";
 import AISearchBar from "../components/chat/AISearchBar";
+import { openAssistant } from "../components/chat/assistantBus";
 import logoImage from "../assets/LogointerrentaTransparente.png";
 
 // ── Fuentes premium (inyectadas una sola vez) ─────────────────────────────────
@@ -64,17 +64,7 @@ export default function Home() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSearchTerm, setActiveSearchTerm] = useState("");
-  const [assistantQuery, setAssistantQuery] = useState(null);
   const carouselRef = useRef(null);
-
-  // Envía la consulta al asistente y hace scroll suave hasta él.
-  const askAssistant = useCallback((text) => {
-    setAssistantQuery({ text, nonce: Date.now() });
-    setTimeout(() => {
-      const el = document.getElementById("asistente");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 60);
-  }, []);
 
   // Inyectar fuentes
   useEffect(() => {
@@ -156,7 +146,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════════════════
           SECCIÓN — BUSCADOR CON IA ("Describe lo que buscas")
       ════════════════════════════════════════════════════════════════════ */}
-      <AISearchBar onSubmit={askAssistant} />
+      <AISearchBar onSubmit={openAssistant} />
 
       {/* ═══════════════════════════════════════════════════════════════════
           SECCIÓN 2 — PROPIEDADES (carrusel + búsqueda)
@@ -637,15 +627,58 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 sm:gap-16 items-center">
-            {/* Asistente IA — reemplaza la imagen estática */}
+            {/* Asistente IA — CTA que abre la burbuja flotante */}
             <AnimatedSection>
-              <div id="asistente" className="relative" style={{ scrollMarginTop: "90px" }}>
+              <div className="relative">
                 <div
                   className="absolute -inset-4 rounded-3xl opacity-25 blur-2xl pointer-events-none"
                   style={{ background: "linear-gradient(135deg, #ecb337, #0d4447)" }}
                 />
-                <div className="relative">
-                  <AssistantChat externalQuery={assistantQuery} />
+                <div
+                  className="relative rounded-3xl p-8 sm:p-12 text-center"
+                  style={{
+                    background: "linear-gradient(135deg, #1f1f1f, #262525)",
+                    border: "1px solid rgba(236,179,55,0.2)",
+                  }}
+                >
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+                    style={{
+                      backgroundColor: "rgba(236,179,55,0.12)",
+                      border: "1px solid rgba(236,179,55,0.3)",
+                    }}
+                  >
+                    <span style={{ color: "#ecb337", fontSize: "1.6rem" }}>✦</span>
+                  </div>
+                  <h3
+                    className="text-2xl sm:text-3xl font-bold mb-3"
+                    style={{
+                      color: "#e2e2e2",
+                      fontFamily: "'Cormorant Garamond', Georgia, serif",
+                      fontWeight: 400,
+                    }}
+                  >
+                    Tu asistente personal
+                  </h3>
+                  <p
+                    className="mb-7 max-w-md mx-auto"
+                    style={{ color: "#b8bcc8", fontFamily: "'Inter', sans-serif" }}
+                  >
+                    Cuéntale qué buscas y te recomienda al instante las
+                    propiedades que mejor encajan con tu presupuesto.
+                  </p>
+                  <button
+                    onClick={() => openAssistant()}
+                    data-cursor="hover"
+                    className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl font-semibold transition-all hover:scale-105 cursor-pointer"
+                    style={{
+                      backgroundColor: "#ecb337",
+                      color: "#161616",
+                      fontFamily: "'Inter', sans-serif",
+                    }}
+                  >
+                    ✦ Conversar con el asistente
+                  </button>
                 </div>
               </div>
             </AnimatedSection>

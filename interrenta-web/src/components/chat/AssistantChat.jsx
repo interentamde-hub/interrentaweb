@@ -243,11 +243,11 @@ export default function AssistantChat({ externalQuery }) {
 
   return (
     <div
-      className="rounded-3xl overflow-hidden flex flex-col"
+      className="rounded-3xl overflow-hidden flex flex-col w-full"
       style={{
         backgroundColor: "#1b1b1b",
         border: "1px solid rgba(236,179,55,0.18)",
-        height: "clamp(520px, 70vh, 640px)",
+        height: "100%",
         boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
       }}
     >
