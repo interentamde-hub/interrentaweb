@@ -21,6 +21,9 @@ import { getAllProperties } from "../services/property.service";
 import Navbar from "../components/layout/Navbar";
 import PropertyCard from "../components/property/PropertyCard";
 import CinematicHero from "../components/cinematic/CinematicHero";
+import StatsCounter from "../components/sections/StatsCounter";
+import ZonesSection from "../components/sections/ZonesSection";
+import HowItWorks from "../components/sections/HowItWorks";
 import aboutImage from "../assets/familia.png";
 import logoImage from "../assets/LogointerrentaTransparente.png";
 
@@ -391,6 +394,16 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECCIÓN — NÚMEROS ANIMADOS (conteo real de propiedades)
+      ════════════════════════════════════════════════════════════════════ */}
+      <StatsCounter propertyCount={properties.length} />
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECCIÓN — EXPLORA POR ZONA (municipios del Oriente)
+      ════════════════════════════════════════════════════════════════════ */}
+      <ZonesSection properties={properties} />
 
       {/* ═══════════════════════════════════════════════════════════════════
           SECCIÓN 3 — STATS / VALORES (idéntica al original)
@@ -829,6 +842,11 @@ export default function Home() {
           </AnimatedSection>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECCIÓN — CÓMO FUNCIONA (proceso en 3 pasos)
+      ════════════════════════════════════════════════════════════════════ */}
+      <HowItWorks />
 
       {/* ═══════════════════════════════════════════════════════════════════
           SECCIÓN 6 — CTA (WhatsApp)

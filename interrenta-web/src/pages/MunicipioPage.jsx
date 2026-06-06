@@ -80,7 +80,7 @@ export default function MunicipioPage({ municipio }) {
         className="min-h-screen flex items-center justify-center"
         style={{ backgroundColor: "#161616" }}
       >
-        <p style={{ color: "#9ca3af" }}>Municipio no encontrado.</p>
+        <p style={{ color: "#b8bcc8" }}>Municipio no encontrado.</p>
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function MunicipioPage({ municipio }) {
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-sm mb-8 transition-colors hover:opacity-80"
-            style={{ color: "#9ca3af" }}
+            style={{ color: "#b8bcc8" }}
           >
             ← Volver al inicio
           </Link>
@@ -126,12 +126,12 @@ export default function MunicipioPage({ municipio }) {
             <div className="text-6xl mb-4">{config.emoji}</div>
             <h1
               className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 leading-tight"
-              style={{ color: "#b3b3b3" }}
+              style={{ color: "#e2e2e2" }}
             >
               Propiedades en{" "}
               <span style={{ color: "#ecb337" }}>{config.nombre}</span>
             </h1>
-            <p className="text-lg sm:text-xl max-w-2xl mx-auto mb-8" style={{ color: "#9ca3af" }}>
+            <p className="text-lg sm:text-xl max-w-2xl mx-auto mb-8" style={{ color: "#b8bcc8" }}>
               {config.descripcion}
             </p>
             <p className="text-sm max-w-xl mx-auto" style={{ color: "#6b7280" }}>
@@ -158,7 +158,7 @@ export default function MunicipioPage({ municipio }) {
                 style={{
                   backgroundColor:
                     filter === item.key ? "#ecb337" : "rgba(38, 37, 37, 0.8)",
-                  color: filter === item.key ? "#161616" : "#b3b3b3",
+                  color: filter === item.key ? "#161616" : "#e2e2e2",
                   border:
                     filter === item.key
                       ? "none"
@@ -183,7 +183,7 @@ export default function MunicipioPage({ municipio }) {
               <span className="text-2xl font-bold" style={{ color: "#ecb337" }}>
                 {filtered.length}
               </span>
-              <span className="ml-2 text-sm" style={{ color: "#9ca3af" }}>
+              <span className="ml-2 text-sm" style={{ color: "#b8bcc8" }}>
                 propiedades en {config.nombre}
               </span>
             </div>
@@ -223,7 +223,7 @@ export default function MunicipioPage({ municipio }) {
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 px-4">
             <span className="text-6xl mb-4 block">🔍</span>
-            <p className="text-xl mb-2" style={{ color: "#9ca3af" }}>
+            <p className="text-xl mb-2" style={{ color: "#b8bcc8" }}>
               No hay propiedades disponibles en {config.nombre} aún
             </p>
             <p className="text-sm mb-6" style={{ color: "#6b7280" }}>
@@ -274,11 +274,11 @@ export default function MunicipioPage({ municipio }) {
       {/* CTA WhatsApp */}
       <section className="py-16 px-4 sm:px-6" style={{ backgroundColor: "#1a1a1a" }}>
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: "#b3b3b3" }}>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: "#e2e2e2" }}>
             ¿No encontraste lo que buscas en{" "}
             <span style={{ color: "#ecb337" }}>{config.nombre}</span>?
           </h2>
-          <p className="mb-6 text-sm" style={{ color: "#9ca3af" }}>
+          <p className="mb-6 text-sm" style={{ color: "#b8bcc8" }}>
             Cuéntanos qué necesitas y te buscamos la propiedad ideal
           </p>
           <a

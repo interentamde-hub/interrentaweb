@@ -87,7 +87,7 @@ export default function Navbar() {
                       transition={{ delay: i * 0.1 }}
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors"
-                      style={{ color: '#b3b3b3' }}
+                      style={{ color: '#e2e2e2' }}
                     >
                       <span>{link.icon}</span>
                       {link.label}
@@ -162,9 +162,9 @@ export default function Navbar() {
                     transition={{ delay: 0.1 + i * 0.1 }}
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-4 px-4 py-4 rounded-xl font-medium transition-all group"
-                    style={{ color: '#b3b3b3' }}
+                    style={{ color: '#e2e2e2' }}
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(236, 179, 55, 0.1)'; e.currentTarget.style.color = '#ecb337' }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#b3b3b3' }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#e2e2e2' }}
                   >
                     <span className="text-xl">{link.icon}</span>
                     <span className="text-lg">{link.label}</span>

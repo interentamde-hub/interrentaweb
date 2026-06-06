@@ -6,11 +6,18 @@ import Home from './pages/Home'
 import PropertyDetail from './pages/PropertyDetail'
 import MunicipioPage from './pages/MunicipioPage'
 import WhatsAppFloat from './components/ui/WhatsAppFloat'
+import CustomCursor from './components/ui/CustomCursor'
+import BrandPreloader from './components/ui/BrandPreloader'
+import RouteTransition from './components/ui/RouteTransition'
 import NotFound from './pages/NotFound'
+import logo from './assets/LogointerrentaTransparente.png'
 
 export default function App() {
   return (
     <>
+    <BrandPreloader logoSrc={logo} />
+    <RouteTransition logoSrc={logo} />
+    <CustomCursor />
     <WhatsAppFloat />
     <Routes>
       <Route path="/" element={<Home />} />

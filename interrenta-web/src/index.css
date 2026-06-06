@@ -46,3 +46,26 @@ html {
 canvas {
   image-rendering: auto;
 }
+
+/* ── Cursor personalizado (solo desktop con puntero fino) ────────────────── */
+@media (pointer: fine) {
+  body.ir-cursor,
+  body.ir-cursor * {
+    cursor: none !important;
+  }
+  /* Mantener el caret de texto en campos editables */
+  body.ir-cursor input,
+  body.ir-cursor textarea,
+  body.ir-cursor select,
+  body.ir-cursor [contenteditable="true"] {
+    cursor: text !important;
+  }
+}
+
+/* En touch o sin mouse nunca se oculta el cursor nativo */
+@media (hover: none), (pointer: coarse) {
+  body.ir-cursor,
+  body.ir-cursor * {
+    cursor: auto;
+  }
+}

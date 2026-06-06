@@ -39,7 +39,7 @@ export default function WhatsAppFloat() {
                 exit={{ opacity: 0, x: 20, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
                 className="px-4 py-2 rounded-xl text-sm font-medium shadow-lg max-w-[200px] text-right"
-                style={{ backgroundColor: "#262525", color: "#b3b3b3", border: "1px solid rgba(236,179,55,0.2)" }}
+                style={{ backgroundColor: "#262525", color: "#e2e2e2", border: "1px solid rgba(236,179,55,0.2)", fontFamily: "'Inter', sans-serif" }}
               >
                 ¿Necesitas ayuda? 💬
               </motion.div>
