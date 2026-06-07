@@ -21,18 +21,23 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const TOTAL      = 181;
-const PX_DESKTOP = 52;   // recorrido más corto = scroll más rápido
-const PX_MOBILE  = 30;
+const FRAMES_TOTAL = 181;   // archivos disponibles por carpeta
+const MOBILE_STEP  = 3;     // mobile: 1 de cada 3 frames (≈61) → menos peso y decodificación
+const PX_DESKTOP   = 52;    // px de scroll por frame (recorrido)
+const PX_MOBILE    = 70;    // menos frames → más px/frame para conservar el recorrido
 
-function makeUrls(base) {
-  return Array.from(
-    { length: TOTAL },
-    (_, i) => `${base}/frame_${String(i + 1).padStart(4, "0")}.webp`,
-  );
+function makeUrls(base, step) {
+  const urls = [];
+  for (let n = 1; n <= FRAMES_TOTAL; n += step) {
+    urls.push(`${base}/frame_${String(n).padStart(4, "0")}.webp`);
+  }
+  // garantizar el último frame (cierre del clip)
+  const last = `${base}/frame_${String(FRAMES_TOTAL).padStart(4, "0")}.webp`;
+  if (urls[urls.length - 1] !== last) urls.push(last);
+  return urls;
 }
-const DESKTOP_URLS = makeUrls("/frames/desktop");
-const MOBILE_URLS  = makeUrls("/frames/mobile");
+const DESKTOP_URLS = makeUrls("/frames/desktop", 1);
+const MOBILE_URLS  = makeUrls("/frames/mobile", MOBILE_STEP);
 
 // ─── Overlays — ventanas CONTINUAS (siempre hay un mensaje; cross-fade) ──────
 const OVERLAYS = [
@@ -105,6 +110,7 @@ export default function CinematicHero({ logoSrc }) {
   const pool           = useRef([]);
   const lastFi         = useRef(-1);
   const isMobileRef    = useRef(false);
+  const countRef       = useRef(FRAMES_TOTAL); // nº de frames del dispositivo actual
 
   const [firstReady, setFirstReady] = useState(false);
   const [isMobile,   setIsMobile]   = useState(false);
@@ -114,17 +120,18 @@ export default function CinematicHero({ logoSrc }) {
   useLayoutEffect(() => {
     const isMob = window.innerWidth < 768;
     isMobileRef.current = isMob;
+    countRef.current = (isMob ? MOBILE_URLS : DESKTOP_URLS).length;
     setIsMobile(isMob);
     if (wrapRef.current) {
       const vh = window.innerHeight;
       wrapRef.current.style.height =
-        `${TOTAL * (isMob ? PX_MOBILE : PX_DESKTOP) + vh}px`;
+        `${countRef.current * (isMob ? PX_MOBILE : PX_DESKTOP) + vh}px`;
     }
   }, []);
 
   // ── Dibuja un frame ───────────────────────────────────────────────────────
   const drawFrame = useCallback((fi) => {
-    const i = Math.max(0, Math.min(fi, TOTAL - 1));
+    const i = Math.max(0, Math.min(fi, countRef.current - 1));
     if (i === lastFi.current) return;
     lastFi.current = i;
     const img = pool.current[i];
@@ -167,15 +174,20 @@ export default function CinematicHero({ logoSrc }) {
         );
       }
 
-      // Title — entra con letterSpacing animado + scale (sin blur: más fluido)
+      // Title — en mobile solo opacity+translate (compositado, sin reflow);
+      // en desktop además letterSpacing + scale para el efecto "snap".
       if (p.title) {
-        const ls = t < 1 ? `${(0.08 * (1 - t) - 0.02 * t).toFixed(3)}em` : "-0.02em";
-        gsap.set(p.title, {
-          opacity: t,
-          y:      28 * (1 - t),
-          scale:  1 + 0.04 * (1 - t),
-          letterSpacing: ls,
-        });
+        if (isMobileRef.current) {
+          gsap.set(p.title, { opacity: t, y: 20 * (1 - t) });
+        } else {
+          const ls = t < 1 ? `${(0.08 * (1 - t) - 0.02 * t).toFixed(3)}em` : "-0.02em";
+          gsap.set(p.title, {
+            opacity: t,
+            y:      28 * (1 - t),
+            scale:  1 + 0.04 * (1 - t),
+            letterSpacing: ls,
+          });
+        }
       }
 
       // Rule — aparece cuando t > 0.35 (después del título)
@@ -199,15 +211,16 @@ export default function CinematicHero({ logoSrc }) {
 
   // ── Carga frames con new Image() ──────────────────────────────────────────
   useEffect(() => {
-    pool.current   = new Array(TOTAL).fill(null);
+    const urls = isMobileRef.current ? MOBILE_URLS : DESKTOP_URLS;
+    const count = urls.length;
+    pool.current   = new Array(count).fill(null);
     lastFi.current = -1;
     setFirstReady(false);
-
-    const urls = isMobileRef.current ? MOBILE_URLS : DESKTOP_URLS;
 
     function loadOne(i) {
       return new Promise((resolve) => {
         const img = new Image();
+        img.decoding = "async";
         pool.current[i] = img;
         img.onload  = () => { if (i === 0) { drawFrame(0); setFirstReady(true); } resolve(); };
         img.onerror = resolve;
@@ -215,13 +228,13 @@ export default function CinematicHero({ logoSrc }) {
       });
     }
 
-    let next = 10;
+    let next = 8;
     function runNext() {
-      if (next >= TOTAL) return;
+      if (next >= count) return;
       loadOne(next++).then(runNext);
     }
     Promise.all(
-      Array.from({ length: Math.min(10, TOTAL) }, (_, i) => loadOne(i)),
+      Array.from({ length: Math.min(8, count) }, (_, i) => loadOne(i)),
     ).then(() => { for (let c = 0; c < 4; c++) runNext(); });
   }, [drawFrame]); // no depende de isMobile — se fija en mount
 
@@ -236,7 +249,7 @@ export default function CinematicHero({ logoSrc }) {
       end: "bottom bottom",
       scrub: isMobileRef.current ? 0.4 : 0.5,
       onUpdate: ({ progress }) => {
-        drawFrame(Math.floor(progress * (TOTAL - 1)));
+        drawFrame(Math.floor(progress * (countRef.current - 1)));
         updateScene(progress);
       },
     });
@@ -338,13 +351,14 @@ export default function CinematicHero({ logoSrc }) {
                 fontStyle: "normal",
                 color: "#ffffff",
                 lineHeight: 1.04,
-                letterSpacing: "0.08em",
-                textShadow:
-                  "0 2px 50px rgba(0,0,0,0.9), 0 0 100px rgba(0,0,0,0.6)",
+                letterSpacing: isMobile ? "0.01em" : "0.08em",
+                textShadow: isMobile
+                  ? "0 1px 14px rgba(0,0,0,0.92)"
+                  : "0 2px 50px rgba(0,0,0,0.9), 0 0 100px rgba(0,0,0,0.6)",
                 margin: 0,
                 whiteSpace: "pre-line",
                 opacity: 0,
-                willChange: "opacity, transform, filter, letter-spacing",
+                willChange: isMobile ? "opacity, transform" : "opacity, transform, letter-spacing",
                 textAlign: ov.align === "right" ? "right"
                          : ov.align === "left"  ? "left"
                          : "center",
@@ -379,10 +393,10 @@ export default function CinematicHero({ logoSrc }) {
                 color: "rgba(236,179,55,0.9)",
                 letterSpacing: "0.32em",
                 textTransform: "uppercase",
-                textShadow: "0 1px 16px rgba(0,0,0,0.95)",
+                textShadow: "0 1px 12px rgba(0,0,0,0.95)",
                 margin: 0,
                 opacity: 0,
-                willChange: "opacity, transform, filter",
+                willChange: "opacity, transform",
                 textAlign: ov.align === "right" ? "right"
                          : ov.align === "left"  ? "left"
                          : "center",
