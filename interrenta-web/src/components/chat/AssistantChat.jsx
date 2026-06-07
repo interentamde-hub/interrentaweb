@@ -274,7 +274,7 @@ export default function AssistantChat({ externalQuery }) {
       </div>
 
       {/* Mensajes */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-hide">
+      <div ref={scrollRef} data-lenis-prevent className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-hide">
         {messages.map((m) => (
           <div key={m.id}>
             <motion.div

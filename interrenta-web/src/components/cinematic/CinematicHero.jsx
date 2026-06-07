@@ -22,8 +22,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const TOTAL      = 181;
-const PX_DESKTOP = 72;
-const PX_MOBILE  = 40;
+const PX_DESKTOP = 52;   // recorrido más corto = scroll más rápido
+const PX_MOBILE  = 30;
 
 function makeUrls(base) {
   return Array.from(
@@ -34,39 +34,39 @@ function makeUrls(base) {
 const DESKTOP_URLS = makeUrls("/frames/desktop");
 const MOBILE_URLS  = makeUrls("/frames/mobile");
 
-// ─── Overlays — orden visual: título → regla → subtítulo ─────────────────────
+// ─── Overlays — ventanas CONTINUAS (siempre hay un mensaje; cross-fade) ──────
 const OVERLAYS = [
   {
     id: "o1",
-    start: 0.00, end: 0.18,
+    start: 0.00, end: 0.22,
     title: "El espacio\nque mereces",
     sub: "Diseño · Confort · Vida",
     align: "center",
   },
   {
     id: "o2",
-    start: 0.22, end: 0.42,
+    start: 0.17, end: 0.42,
     title: "Construido\ncon visión",
     sub: "Cada detalle, una decisión",
     align: "left",
   },
   {
     id: "o3",
-    start: 0.46, end: 0.64,
+    start: 0.37, end: 0.62,
     title: "Arquitectura\nque inspira",
     sub: "Forma · Función · Elegancia",
     align: "right",
   },
   {
     id: "o4",
-    start: 0.67, end: 0.84,
+    start: 0.57, end: 0.82,
     title: "Tu hogar\nte espera",
     sub: "Oriente Antioqueño",
     align: "center",
   },
   {
     id: "o5",
-    start: 0.87, end: 1.00,
+    start: 0.77, end: 1.08, // termina más allá de 1 para quedarse visible al final
     title: "InterRenta",
     sub: "Bienes Raíces · Oriente Antioqueño",
     align: "center",
@@ -152,7 +152,7 @@ export default function CinematicHero({ logoSrc }) {
   }, [drawFrame]);
 
   // ── Stagger de overlays — anima title/rule/sub por separado ─────────────
-  const FADE = 0.045;
+  const FADE = 0.06; // zona de cross-fade entre overlays (coincide con el solape)
   const updateScene = useCallback((progress) => {
     OVERLAYS.forEach(({ start, end }, i) => {
       const p = partRefs.current[i];
@@ -167,14 +167,13 @@ export default function CinematicHero({ logoSrc }) {
         );
       }
 
-      // Title — lidera la entrada con letterSpacing animado + blur + scale
+      // Title — entra con letterSpacing animado + scale (sin blur: más fluido)
       if (p.title) {
         const ls = t < 1 ? `${(0.08 * (1 - t) - 0.02 * t).toFixed(3)}em` : "-0.02em";
         gsap.set(p.title, {
           opacity: t,
-          y:      36 * (1 - t),
-          scale:  1 + 0.05 * (1 - t),
-          filter: t < 0.98 ? `blur(${(16 * (1 - t)).toFixed(1)}px)` : "none",
+          y:      28 * (1 - t),
+          scale:  1 + 0.04 * (1 - t),
           letterSpacing: ls,
         });
       }
@@ -188,11 +187,7 @@ export default function CinematicHero({ logoSrc }) {
       // Sub — aparece cuando t > 0.55 (última en llegar)
       if (p.sub) {
         const tS = smoothstep(Math.max(0, (t - 0.55) / 0.45));
-        gsap.set(p.sub, {
-          opacity: tS,
-          y:       14 * (1 - tS),
-          filter:  tS < 0.95 ? `blur(${(4 * (1 - tS)).toFixed(1)}px)` : "none",
-        });
+        gsap.set(p.sub, { opacity: tS, y: 12 * (1 - tS) });
       }
     });
 
@@ -239,7 +234,7 @@ export default function CinematicHero({ logoSrc }) {
       trigger: wrap,
       start: "top top",
       end: "bottom bottom",
-      scrub: isMobileRef.current ? 0.35 : 0.85,
+      scrub: isMobileRef.current ? 0.4 : 0.5,
       onUpdate: ({ progress }) => {
         drawFrame(Math.floor(progress * (TOTAL - 1)));
         updateScene(progress);

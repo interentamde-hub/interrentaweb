@@ -26,6 +26,7 @@ import ZonesSection from "../components/sections/ZonesSection";
 import HowItWorks from "../components/sections/HowItWorks";
 import AISearchBar from "../components/chat/AISearchBar";
 import { openAssistant } from "../components/chat/assistantBus";
+import { scrollToEl } from "../lib/lenis";
 import logoImage from "../assets/LogointerrentaTransparente.png";
 
 // ── Fuentes premium (inyectadas una sola vez) ─────────────────────────────────
@@ -77,8 +78,7 @@ export default function Home() {
   }, []);
 
   const scrollToProperties = useCallback(() => {
-    const section = document.getElementById("propiedades");
-    if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToEl("#propiedades");
   }, []);
 
   const handleSearch = useCallback(() => {

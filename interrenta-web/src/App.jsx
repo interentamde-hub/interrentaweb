@@ -1,4 +1,9 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import Lenis from 'lenis'
+import { setLenis } from './lib/lenis'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminLogin from './pages/AdminLogin'
 import ProtectedRoute from './components/common/ProtectedRoute'
@@ -14,6 +19,43 @@ import NotFound from './pages/NotFound'
 import logo from './assets/LogointerrentaTransparente.png'
 
 export default function App() {
+  // ── Scroll suave (Lenis) solo en desktop; mobile usa scroll nativo ──────────
+  useEffect(() => {
+    const fine =
+      window.matchMedia("(pointer: fine)").matches && window.innerWidth >= 768;
+    if (!fine) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+    const lenis = new Lenis({ lerp: 0.12, wheelMultiplier: 1.1, smoothWheel: true });
+    setLenis(lenis);
+
+    lenis.on("scroll", ScrollTrigger.update);
+    const onTick = (time) => lenis.raf(time * 1000);
+    gsap.ticker.add(onTick);
+    gsap.ticker.lagSmoothing(0);
+
+    // Anclas internas (#id) con scroll suave + compensación del navbar
+    const onClick = (e) => {
+      const a = e.target.closest('a[href^="#"]');
+      if (!a) return;
+      const href = a.getAttribute("href");
+      if (!href || href.length < 2) return;
+      const el = document.querySelector(href);
+      if (!el) return;
+      e.preventDefault();
+      lenis.scrollTo(el, { offset: -80 });
+    };
+    document.addEventListener("click", onClick);
+
+    return () => {
+      document.removeEventListener("click", onClick);
+      gsap.ticker.remove(onTick);
+      gsap.ticker.lagSmoothing(500, 33);
+      lenis.destroy();
+      setLenis(null);
+    };
+  }, []);
+
   return (
     <>
     <BrandPreloader logoSrc={logo} />

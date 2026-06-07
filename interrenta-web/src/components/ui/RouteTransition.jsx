@@ -15,6 +15,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { scrollToTop } from "../../lib/lenis";
 
 export default function RouteTransition({ logoSrc }) {
   const { pathname } = useLocation();
@@ -29,12 +30,8 @@ export default function RouteTransition({ logoSrc }) {
     // Patrón intencional: la cortina se dispara al cambiar de ruta (evento externo).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCovering(true);
-    // Salto inmediato al tope mientras la cortina cubre (evita scroll suave del CSS)
-    try {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    } catch {
-      window.scrollTo(0, 0);
-    }
+    // Salto inmediato al tope mientras la cortina cubre (compatible con Lenis)
+    scrollToTop(true);
     const t = setTimeout(() => setCovering(false), 480);
     return () => clearTimeout(t);
   }, [pathname]);
