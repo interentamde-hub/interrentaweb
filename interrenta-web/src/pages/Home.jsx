@@ -402,13 +402,10 @@ export default function Home() {
                 onClick={() => scrollCarousel("left")}
                 aria-label="Anterior"
                 data-cursor="hover"
-                className="hidden md:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full items-center justify-center transition-all hover:scale-110 cursor-pointer"
+                className="hidden md:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
                 style={{
-                  backgroundColor: "rgba(22,22,22,0.85)",
-                  color: "#ecb337",
-                  backdropFilter: "blur(8px)",
-                  border: "1px solid rgba(236,179,55,0.3)",
-                  boxShadow: "0 6px 24px rgba(0,0,0,0.45)",
+                  color: "#161616",
+                  boxShadow: "0 8px 28px rgba(0,0,0,0.5)",
                 }}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -419,13 +416,10 @@ export default function Home() {
                 onClick={() => scrollCarousel("right")}
                 aria-label="Siguiente"
                 data-cursor="hover"
-                className="hidden md:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full items-center justify-center transition-all hover:scale-110 cursor-pointer"
+                className="hidden md:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
                 style={{
-                  backgroundColor: "rgba(22,22,22,0.85)",
-                  color: "#ecb337",
-                  backdropFilter: "blur(8px)",
-                  border: "1px solid rgba(236,179,55,0.3)",
-                  boxShadow: "0 6px 24px rgba(0,0,0,0.45)",
+                  color: "#161616",
+                  boxShadow: "0 8px 28px rgba(0,0,0,0.5)",
                 }}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
