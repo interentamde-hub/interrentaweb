@@ -188,7 +188,7 @@ export default function MunicipioPage({ municipio }) {
               </span>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 md:hidden">
               <button
                 onClick={() => scrollCarousel("left")}
                 className="p-3 rounded-full transition-all hover:scale-110"
@@ -267,6 +267,42 @@ export default function MunicipioPage({ municipio }) {
               className="hidden sm:block absolute right-0 top-0 bottom-0 w-16 z-10 pointer-events-none"
               style={{ background: "linear-gradient(to left, #161616, transparent)" }}
             />
+
+            {/* Flechas sobre las tarjetas — solo escritorio */}
+            <button
+              onClick={() => scrollCarousel("left")}
+              aria-label="Anterior"
+              data-cursor="hover"
+              className="hidden md:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full items-center justify-center transition-all hover:scale-110 cursor-pointer"
+              style={{
+                backgroundColor: "rgba(22,22,22,0.85)",
+                color: "#ecb337",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(236,179,55,0.3)",
+                boxShadow: "0 6px 24px rgba(0,0,0,0.45)",
+              }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => scrollCarousel("right")}
+              aria-label="Siguiente"
+              data-cursor="hover"
+              className="hidden md:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full items-center justify-center transition-all hover:scale-110 cursor-pointer"
+              style={{
+                backgroundColor: "rgba(22,22,22,0.85)",
+                color: "#ecb337",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(236,179,55,0.3)",
+                boxShadow: "0 6px 24px rgba(0,0,0,0.45)",
+              }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         )}
       </section>
