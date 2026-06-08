@@ -333,100 +333,99 @@ export default function Home() {
           </AnimatedSection>
         </div>
 
-        {/* Carrusel de propiedades */}
-        <div className="relative">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-12 h-12 border-4 rounded-full"
-                style={{ borderColor: "#262525", borderTopColor: "#ecb337" }}
-              />
-            </div>
-          ) : filteredProperties.length === 0 ? (
-            <div className="text-center py-20 px-4">
-              <p className="text-6xl mb-4">🔍</p>
-              <p className="text-xl mb-4" style={{ color: "#b8bcc8" }}>
-                No se encontraron propiedades
-              </p>
-              <button
-                onClick={() => {
-                  setFilter("all");
-                  setSearchTerm("");
-                  setActiveSearchTerm("");
-                }}
-                className="px-6 py-3 rounded-full font-semibold transition-all cursor-pointer"
-                style={{ backgroundColor: "#ecb337", color: "#161616" }}
-              >
-                Limpiar filtros
-              </button>
-            </div>
-          ) : (
-            <>
-              <div
-                className="hidden sm:block absolute left-0 top-0 bottom-0 w-16 md:w-24 z-10 pointer-events-none"
-                style={{
-                  background: "linear-gradient(to right, #161616, transparent)",
-                }}
-              />
-              <div
-                ref={carouselRef}
-                className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 px-4 sm:px-6 md:px-12 lg:px-24"
-                style={{
-                  scrollSnapType: "x mandatory",
-                  scrollbarWidth: "none",
-                  msOverflowStyle: "none",
-                  WebkitOverflowScrolling: "touch",
-                }}
-              >
-                {filteredProperties.map((property, index) => (
-                  <div
-                    key={property.id}
-                    className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0"
-                    style={{ scrollSnapAlign: "start" }}
-                  >
-                    <PropertyCard property={property} index={index} />
-                  </div>
-                ))}
-              </div>
-              <div
-                className="hidden sm:block absolute right-0 top-0 bottom-0 w-16 md:w-24 z-10 pointer-events-none"
-                style={{
-                  background: "linear-gradient(to left, #161616, transparent)",
-                }}
-              />
+        {/* Carrusel — botones en su propia columna lateral (desktop) */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:flex md:items-center md:gap-3 lg:gap-5">
+          {/* Botón izquierda — espacio propio */}
+          {!loading && filteredProperties.length > 0 && (
+            <button
+              onClick={() => scrollCarousel("left")}
+              aria-label="Anterior"
+              data-cursor="hover"
+              className="hidden md:flex flex-shrink-0 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
+              style={{ color: "#161616", boxShadow: "0 8px 28px rgba(0,0,0,0.5)" }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
 
-              {/* Flechas sobre las tarjetas — solo escritorio */}
-              <button
-                onClick={() => scrollCarousel("left")}
-                aria-label="Anterior"
-                data-cursor="hover"
-                className="hidden md:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
-                style={{
-                  color: "#161616",
-                  boxShadow: "0 8px 28px rgba(0,0,0,0.5)",
-                }}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={() => scrollCarousel("right")}
-                aria-label="Siguiente"
-                data-cursor="hover"
-                className="hidden md:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
-                style={{
-                  color: "#161616",
-                  boxShadow: "0 8px 28px rgba(0,0,0,0.5)",
-                }}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </>
+          {/* Área del carrusel */}
+          <div className="relative w-full md:flex-1 md:min-w-0">
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-12 h-12 border-4 rounded-full"
+                  style={{ borderColor: "#262525", borderTopColor: "#ecb337" }}
+                />
+              </div>
+            ) : filteredProperties.length === 0 ? (
+              <div className="text-center py-20 px-4">
+                <p className="text-6xl mb-4">🔍</p>
+                <p className="text-xl mb-4" style={{ color: "#b8bcc8" }}>
+                  No se encontraron propiedades
+                </p>
+                <button
+                  onClick={() => {
+                    setFilter("all");
+                    setSearchTerm("");
+                    setActiveSearchTerm("");
+                  }}
+                  className="px-6 py-3 rounded-full font-semibold transition-all cursor-pointer"
+                  style={{ backgroundColor: "#ecb337", color: "#161616" }}
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            ) : (
+              <>
+                <div
+                  className="hidden sm:block absolute left-0 top-0 bottom-0 w-10 md:w-14 z-10 pointer-events-none"
+                  style={{ background: "linear-gradient(to right, #161616, transparent)" }}
+                />
+                <div
+                  ref={carouselRef}
+                  className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 px-1 sm:px-2"
+                  style={{
+                    scrollSnapType: "x mandatory",
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                >
+                  {filteredProperties.map((property, index) => (
+                    <div
+                      key={property.id}
+                      className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0"
+                      style={{ scrollSnapAlign: "start" }}
+                    >
+                      <PropertyCard property={property} index={index} />
+                    </div>
+                  ))}
+                </div>
+                <div
+                  className="hidden sm:block absolute right-0 top-0 bottom-0 w-10 md:w-14 z-10 pointer-events-none"
+                  style={{ background: "linear-gradient(to left, #161616, transparent)" }}
+                />
+              </>
+            )}
+          </div>
+
+          {/* Botón derecha — espacio propio */}
+          {!loading && filteredProperties.length > 0 && (
+            <button
+              onClick={() => scrollCarousel("right")}
+              aria-label="Siguiente"
+              data-cursor="hover"
+              className="hidden md:flex flex-shrink-0 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
+              style={{ color: "#161616", boxShadow: "0 8px 28px rgba(0,0,0,0.5)" }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           )}
         </div>
       </section>

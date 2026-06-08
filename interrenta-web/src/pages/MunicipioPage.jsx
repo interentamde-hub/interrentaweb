@@ -239,59 +239,58 @@ export default function MunicipioPage({ municipio }) {
             </a>
           </div>
         ) : (
-          <div className="relative">
-            <div
-              className="hidden sm:block absolute left-0 top-0 bottom-0 w-16 z-10 pointer-events-none"
-              style={{ background: "linear-gradient(to right, #161616, transparent)" }}
-            />
-            <div
-              ref={carouselRef}
-              className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 px-4 sm:px-12 lg:px-24"
-              style={{
-                scrollSnapType: "x mandatory",
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-              }}
-            >
-              {filtered.map((property, index) => (
-                <div
-                  key={property.id}
-                  className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0"
-                  style={{ scrollSnapAlign: "start" }}
-                >
-                  <PropertyCard property={property} index={index} />
-                </div>
-              ))}
-            </div>
-            <div
-              className="hidden sm:block absolute right-0 top-0 bottom-0 w-16 z-10 pointer-events-none"
-              style={{ background: "linear-gradient(to left, #161616, transparent)" }}
-            />
-
-            {/* Flechas sobre las tarjetas — solo escritorio */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:flex md:items-center md:gap-3 lg:gap-5">
+            {/* Botón izquierda — espacio propio */}
             <button
               onClick={() => scrollCarousel("left")}
               aria-label="Anterior"
               data-cursor="hover"
-              className="hidden md:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
-              style={{
-                color: "#161616",
-                boxShadow: "0 8px 28px rgba(0,0,0,0.5)",
-              }}
+              className="hidden md:flex flex-shrink-0 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
+              style={{ color: "#161616", boxShadow: "0 8px 28px rgba(0,0,0,0.5)" }}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
+
+            {/* Área del carrusel */}
+            <div className="relative w-full md:flex-1 md:min-w-0">
+              <div
+                className="hidden sm:block absolute left-0 top-0 bottom-0 w-10 md:w-14 z-10 pointer-events-none"
+                style={{ background: "linear-gradient(to right, #161616, transparent)" }}
+              />
+              <div
+                ref={carouselRef}
+                className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 px-1 sm:px-2"
+                style={{
+                  scrollSnapType: "x mandatory",
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                }}
+              >
+                {filtered.map((property, index) => (
+                  <div
+                    key={property.id}
+                    className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0"
+                    style={{ scrollSnapAlign: "start" }}
+                  >
+                    <PropertyCard property={property} index={index} />
+                  </div>
+                ))}
+              </div>
+              <div
+                className="hidden sm:block absolute right-0 top-0 bottom-0 w-10 md:w-14 z-10 pointer-events-none"
+                style={{ background: "linear-gradient(to left, #161616, transparent)" }}
+              />
+            </div>
+
+            {/* Botón derecha — espacio propio */}
             <button
               onClick={() => scrollCarousel("right")}
               aria-label="Siguiente"
               data-cursor="hover"
-              className="hidden md:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
-              style={{
-                color: "#161616",
-                boxShadow: "0 8px 28px rgba(0,0,0,0.5)",
-              }}
+              className="hidden md:flex flex-shrink-0 w-14 h-14 rounded-full items-center justify-center transition-all hover:scale-110 hover:bg-[#d7af4d] cursor-pointer bg-[#ecb337]"
+              style={{ color: "#161616", boxShadow: "0 8px 28px rgba(0,0,0,0.5)" }}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
