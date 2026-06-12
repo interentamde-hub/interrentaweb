@@ -28,6 +28,30 @@ import AISearchBar from "../components/chat/AISearchBar";
 import { openAssistant } from "../components/chat/assistantBus";
 import { scrollToEl } from "../lib/lenis";
 import logoImage from "../assets/LogointerrentaTransparente.png";
+import Seo from "../components/common/Seo";
+import { SITE_URL } from "../lib/seo";
+
+// ── SEO: datos estructurados del negocio (schema.org) ─────────────────────────
+const AGENT_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  name: "InterRenta",
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.png`,
+  image: `${SITE_URL}/og-image.jpg`,
+  description:
+    "Inmobiliaria del Oriente Antioqueño. Arriendo y venta de apartamentos, casas, fincas y locales en Rionegro, Envigado, El Retiro y San Vicente.",
+  telephone: "+57 319 522 7378",
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Rionegro",
+    addressRegion: "Antioquia",
+    addressCountry: "CO",
+  },
+  areaServed: ["Rionegro", "Envigado", "El Retiro", "San Vicente de Ferrer"].map(
+    (name) => ({ "@type": "City", name }),
+  ),
+};
 
 // ── Fuentes premium (inyectadas una sola vez) ─────────────────────────────────
 function injectFonts() {
@@ -129,12 +153,20 @@ export default function Home() {
       className="min-h-screen"
       style={{ backgroundColor: "#161616", overflowX: "clip" }}
     >
+      <Seo
+        title="InterRenta — Bienes Raíces Oriente Antioqueño | Arriendo y Venta"
+        description="Encuentra tu hogar ideal en el Oriente Antioqueño. Arriendo y venta de apartamentos, casas, fincas y locales en Rionegro, Envigado, El Retiro y San Vicente."
+        path="/"
+        jsonLd={AGENT_JSON_LD}
+      />
+
       {/* Navbar flotante — siempre visible */}
       <Navbar />
 
       {/* ═══════════════════════════════════════════════════════════════════
-          SECCIÓN 1 — SCROLLYTELLING CINEMATOGRÁFICO
-          137 frames (~11 600 px de scroll en total)
+          SECCIÓN 1 — HERO
+          Desktop/panorámico: scrollytelling de 215 frames (~9 900 px).
+          Móvil/vertical: hero estático con el primer frame.
       ════════════════════════════════════════════════════════════════════ */}
       <CinematicHero logoSrc={logoImage} />
 

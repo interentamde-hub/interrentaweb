@@ -14,6 +14,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         assetFileNames: "assets/[name]-[hash][extname]",
+        // Vendors en chunks separados: se descargan en paralelo y el navegador
+        // los cachea entre deploys (solo cambia el chunk del código propio)
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-motion": ["framer-motion", "gsap", "lenis"],
+          "vendor-supabase": ["@supabase/supabase-js"],
+        },
       },
     },
   },

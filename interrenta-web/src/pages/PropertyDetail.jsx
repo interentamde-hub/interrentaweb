@@ -14,6 +14,8 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getPropertyByCode } from "../services/property.service";
 import Navbar from "../components/layout/Navbar";
+import Seo from "../components/common/Seo";
+import { SITE_URL, truncate, breadcrumbJsonLd } from "../lib/seo";
 
 const WA_NUMBER = "573195227378";
 
@@ -113,8 +115,66 @@ export default function PropertyDetail() {
     `Hola, me interesa la propiedad ${property.code}: ${property.title}.`,
   )}`;
 
+  // ── SEO: meta tags + datos estructurados (schema.org) ─────────────────────
+  const opLabel = property.contract_type === "venta" ? "Venta" : "Arriendo";
+  const cleanTitle = (property.title || "Propiedad").trim();
+  const seoTitle = `${cleanTitle} — ${opLabel} en ${property.sector || "Oriente Antioqueño"} | InterRenta`;
+  const seoDescription =
+    truncate(property.description) ||
+    `${property.property_type || "Propiedad"} en ${opLabel.toLowerCase()} en ${location || "el Oriente Antioqueño"}. Código ${property.code}. InterRenta, bienes raíces en el Oriente Antioqueño.`;
+
+  const listingJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    name: cleanTitle,
+    url: `${SITE_URL}/propiedades/${property.code}`,
+    description: seoDescription,
+    ...(property.cover_url && { image: property.cover_url }),
+    ...(property.created_at && { datePosted: property.created_at }),
+    ...(property.price && {
+      offers: {
+        "@type": "Offer",
+        price: property.price,
+        priceCurrency: "COP",
+        availability:
+          property.status === "disponible"
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+        businessFunction:
+          property.contract_type === "venta"
+            ? "http://purl.org/goodrelations/v1#Sell"
+            : "http://purl.org/goodrelations/v1#LeaseOut",
+      },
+    }),
+    address: {
+      "@type": "PostalAddress",
+      ...(property.sector && { addressLocality: property.sector }),
+      addressRegion: "Antioquia",
+      addressCountry: "CO",
+    },
+    ...(property.bedrooms && { numberOfBedrooms: property.bedrooms }),
+    ...(property.bathrooms && { numberOfBathroomsTotal: property.bathrooms }),
+    ...(property.area && {
+      floorSize: { "@type": "QuantitativeValue", value: property.area, unitCode: "MTK" },
+    }),
+  };
+
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: "Inicio", path: "/" },
+    { name: "Propiedades", path: "/#propiedades" },
+    { name: cleanTitle, path: `/propiedades/${property.code}` },
+  ]);
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#161616" }}>
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        path={`/propiedades/${property.code}`}
+        image={property.cover_url}
+        type="article"
+        jsonLd={[listingJsonLd, breadcrumbs]}
+      />
       <Navbar />
 
       {/* ═══ HERO FULL-BLEED ═════════════════════════════════════════════════ */}

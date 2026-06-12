@@ -1,22 +1,30 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { setLenis } from './lib/lenis'
-import AdminDashboard from './pages/AdminDashboard'
-import AdminLogin from './pages/AdminLogin'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import Home from './pages/Home'
-import PropertyDetail from './pages/PropertyDetail'
-import MunicipioPage from './pages/MunicipioPage'
 import WhatsAppFloat from './components/ui/WhatsAppFloat'
 import CustomCursor from './components/ui/CustomCursor'
 import BrandPreloader from './components/ui/BrandPreloader'
 import RouteTransition from './components/ui/RouteTransition'
-import AssistantWidget from './components/chat/AssistantWidget'
-import NotFound from './pages/NotFound'
 import logo from './assets/LogointerrentaTransparente.png'
+
+// ── Code-splitting: estas rutas salen del bundle inicial y se cargan bajo
+//    demanda (Home queda eager por ser la landing) ────────────────────────────
+const PropertyDetail = lazy(() => import('./pages/PropertyDetail'))
+const MunicipioPage = lazy(() => import('./pages/MunicipioPage'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const AdminLogin = lazy(() => import('./pages/AdminLogin'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const AssistantWidget = lazy(() => import('./components/chat/AssistantWidget'))
+
+// Fallback oscuro mientras carga el chunk de una ruta (evita flash blanco)
+const RouteFallback = () => (
+  <div className="min-h-screen" style={{ backgroundColor: '#161616' }} />
+)
 
 export default function App() {
   // ── Scroll suave (Lenis) solo en desktop; mobile usa scroll nativo ──────────
@@ -62,7 +70,10 @@ export default function App() {
     <RouteTransition logoSrc={logo} />
     <CustomCursor />
     <WhatsAppFloat />
-    <AssistantWidget />
+    <Suspense fallback={null}>
+      <AssistantWidget />
+    </Suspense>
+    <Suspense fallback={<RouteFallback />}>
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/propiedades/:code" element={<PropertyDetail />} />
@@ -84,6 +95,7 @@ export default function App() {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
     </>
   )
 }

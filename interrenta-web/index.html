@@ -7,11 +7,18 @@
     <link rel="apple-touch-icon" href="/favicon.png?v=3" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>InterRenta — Bienes Raíces Oriente Antioqueño</title>
-    <meta name="description" content="Encuentra tu hogar ideal en el Oriente Antioqueño. Arriendo y venta de propiedades con el mejor servicio inmobiliario de la región." />
+    <!-- Los tags marcados con data-static-seo son el fallback para crawlers SIN
+         JavaScript (WhatsApp, Facebook). Al montar React se eliminan (main.jsx)
+         y react-helmet-async inyecta los dinámicos por página, sin duplicados. -->
+    <meta data-static-seo name="description" content="Encuentra tu hogar ideal en el Oriente Antioqueño. Arriendo y venta de propiedades con el mejor servicio inmobiliario de la región." />
 
     <!-- ═══ PERFORMANCE: Preconnect para Google Fonts ═══════════════════════ -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- ═══ PERFORMANCE: Preload del primer frame del hero (LCP de la home).
+         Lo usan ambos heros: el scrollytelling y el estático de móvil ═══════ -->
+    <link rel="preload" as="image" href="/frames/desktop/frame_0001.webp" />
 
     <!-- ═══ Google Fonts (carga al inicio para evitar FOUF) ════════════════ -->
     <link
@@ -20,9 +27,19 @@
     />
 
     <!-- ═══ Open Graph (SEO) ═══════════════════════════════════════════════ -->
-    <meta property="og:title"       content="InterRenta — Bienes Raíces" />
-    <meta property="og:description" content="Arriendo y venta de propiedades en el Oriente Antioqueño." />
-    <meta property="og:type"        content="website" />
+    <meta data-static-seo property="og:title"       content="InterRenta — Bienes Raíces Oriente Antioqueño" />
+    <meta data-static-seo property="og:description" content="Arriendo y venta de propiedades en el Oriente Antioqueño." />
+    <meta data-static-seo property="og:type"        content="website" />
+    <meta data-static-seo property="og:url"         content="https://www.interrenta.com/" />
+    <meta data-static-seo property="og:image"       content="https://www.interrenta.com/og-image.jpg" />
+    <meta data-static-seo property="og:site_name"   content="InterRenta" />
+    <meta data-static-seo property="og:locale"      content="es_CO" />
+
+    <!-- ═══ Twitter Cards ══════════════════════════════════════════════════ -->
+    <meta data-static-seo name="twitter:card"        content="summary_large_image" />
+    <meta data-static-seo name="twitter:title"       content="InterRenta — Bienes Raíces Oriente Antioqueño" />
+    <meta data-static-seo name="twitter:description" content="Arriendo y venta de propiedades en el Oriente Antioqueño." />
+    <meta data-static-seo name="twitter:image"       content="https://www.interrenta.com/og-image.jpg" />
   </head>
   <body>
     <div id="root"></div>

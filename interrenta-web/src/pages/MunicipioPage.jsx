@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Helmet } from "react-helmet-async";
 import { getPropertiesBySector } from "../services/property.service";
+import Seo from "../components/common/Seo";
+import { breadcrumbJsonLd } from "../lib/seo";
 import Navbar from "../components/layout/Navbar";
 import PropertyCard from "../components/property/PropertyCard";
 
@@ -87,15 +88,15 @@ export default function MunicipioPage({ municipio }) {
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: "#161616" }}>
-      <Helmet>
-        <title>{`Propiedades en ${config.nombre} – InterRenta`}</title>
-        <meta name="description" content={config.descripcion} />
-        <link rel="canonical" href={`https://www.interrenta.com/${municipio}`} />
-        <meta property="og:title" content={`Propiedades en ${config.nombre} – InterRenta`} />
-        <meta property="og:description" content={config.descripcion} />
-        <meta property="og:url" content={`https://www.interrenta.com/${municipio}`} />
-        <meta property="og:type" content="website" />
-      </Helmet>
+      <Seo
+        title={`Propiedades en ${config.nombre} – Arriendo y Venta | InterRenta`}
+        description={config.descripcion}
+        path={`/${municipio}`}
+        jsonLd={breadcrumbJsonLd([
+          { name: "Inicio", path: "/" },
+          { name: config.nombre, path: `/${municipio}` },
+        ])}
+      />
 
       <Navbar />
 

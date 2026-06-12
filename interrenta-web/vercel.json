@@ -17,9 +17,22 @@
                     "value": "text/plain; charset=utf-8"
                 }
             ]
+        },
+        {
+            "source": "/frames/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=31536000, immutable"
+                }
+            ]
         }
     ],
     "rewrites": [
+        {
+            "source": "/sitemap.xml",
+            "destination": "/api/sitemap"
+        },
         {
             "source": "/((?!api/|sitemap\\.xml|robots\\.txt|assets/|favicon\\.ico).*)",
             "destination": "/index.html"

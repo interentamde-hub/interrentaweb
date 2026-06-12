@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { supabase } from '../services/supabase'
 
 const SECRET_CODE = import.meta.env.VITE_ADMIN_SECRET_CODE
@@ -51,6 +52,9 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <h1 className="text-2xl font-semibold text-center mb-2">
           Panel Administrativo
