@@ -21,6 +21,7 @@ const STATIC_PAGES = [
   { path: "/envigado", priority: "0.9", changefreq: "weekly" },
   { path: "/el-retiro", priority: "0.9", changefreq: "weekly" },
   { path: "/san-vicente", priority: "0.9", changefreq: "weekly" },
+  { path: "/nosotros", priority: "0.7", changefreq: "monthly" },
 ];
 
 const xmlEscape = (s) =>

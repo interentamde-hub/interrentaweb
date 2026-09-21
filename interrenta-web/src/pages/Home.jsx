@@ -105,6 +105,18 @@ export default function Home() {
     scrollToEl("#propiedades");
   }, []);
 
+  // Llegar con /#seccion desde otra ruta: RouteTransition sube al tope al
+  // cambiar de página, así que el ancla se aplica después. Se repite cuando
+  // cargan las propiedades porque el carrusel cambia la altura de la página.
+  const pendingHash = useRef(window.location.hash);
+  useEffect(() => {
+    const hash = pendingHash.current;
+    if (hash.length < 2) return;
+    const t = setTimeout(() => scrollToEl(hash, { immediate: true }), 60);
+    if (!loading) pendingHash.current = "";
+    return () => clearTimeout(t);
+  }, [loading]);
+
   const handleSearch = useCallback(() => {
     setActiveSearchTerm(searchTerm);
     setTimeout(scrollToProperties, 100);

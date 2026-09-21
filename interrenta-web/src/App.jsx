@@ -16,6 +16,7 @@ import logo from './assets/LogointerrentaTransparente.png'
 //    demanda (Home queda eager por ser la landing) ────────────────────────────
 const PropertyDetail = lazy(() => import('./pages/PropertyDetail'))
 const MunicipioPage = lazy(() => import('./pages/MunicipioPage'))
+const Nosotros = lazy(() => import('./pages/Nosotros'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const AdminLogin = lazy(() => import('./pages/AdminLogin'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -77,6 +78,8 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/propiedades/:code" element={<PropertyDetail />} />
+      <Route path="/nosotros" element={<Nosotros />} />
+      <Route path="/perfil" element={<Navigate to="/nosotros" replace />} />
       <Route path="/panel-ir8x7k2m9z" element={<AdminLogin />} />
       <Route
         path="/admin-ir8x7k2m9z"

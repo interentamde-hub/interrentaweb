@@ -25,12 +25,13 @@ export function scrollToTop(immediate = true) {
   }
 }
 
-export function scrollToEl(target, { offset = -80 } = {}) {
+export function scrollToEl(target, { offset = -80, immediate = false } = {}) {
   const el = typeof target === "string" ? document.querySelector(target) : target;
   if (!el) return;
   if (_lenis) {
-    _lenis.scrollTo(el, { offset });
+    _lenis.scrollTo(el, { offset, immediate });
   } else {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    // "auto" respetaría el scroll-behavior: smooth del CSS; "instant" lo ignora.
+    el.scrollIntoView({ behavior: immediate ? "instant" : "smooth", block: "start" });
   }
 }

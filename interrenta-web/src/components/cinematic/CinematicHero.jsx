@@ -22,6 +22,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ArrowDown } from "lucide-react";
+import { scrollToEl } from "../../lib/lenis";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -126,6 +128,25 @@ const SUB_STYLE = {
   textShadow: "0 1px 12px rgba(0,0,0,0.95)",
   margin: 0,
 };
+
+// ─── Botón para ir directo a las propiedades ─────────────────────────────────
+// En el hero cinematográfico salta de golpe: animar ~9 900 px de scroll
+// reproduciría el recorrido entero, que es justo lo que se quiere evitar.
+function SkipButton({ label, immediate, buttonRef, className = "", style }) {
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      data-cursor="hover"
+      onClick={() => scrollToEl("#propiedades", { immediate })}
+      className={`group inline-flex items-center gap-2.5 rounded-full border border-[#ecb337]/55 bg-black/45 px-5 text-[13px] font-medium tracking-[0.04em] text-[#f5d170] backdrop-blur-md transition-colors duration-200 hover:border-[#ecb337] hover:bg-[#ecb337] hover:text-[#161616] cursor-pointer ${className}`}
+      style={{ height: 44, fontFamily: "'Inter',sans-serif", zIndex: 20, pointerEvents: "auto", ...style }}
+    >
+      {label}
+      <ArrowDown size={16} strokeWidth={2} className="transition-transform duration-200 group-hover:translate-y-0.5" />
+    </button>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hero ESTÁTICO — móvil y pantallas verticales (sin scrollytelling)
@@ -240,6 +261,9 @@ function StaticHero({ logoSrc }) {
         <p ref={subRef} style={{ ...SUB_STYLE, fontSize: "0.6rem", opacity: 0 }}>
           Diseño · Confort · Vida
         </p>
+        {/* Dentro del bloque de texto y no en el borde inferior: las esquinas
+            de abajo son de las burbujas de WhatsApp y del asistente. */}
+        <SkipButton label="Ver propiedades" style={{ marginTop: "1.5rem" }} />
       </div>
     </div>
   );
@@ -255,6 +279,7 @@ function ScrollyHero({ logoSrc }) {
   const partRefs        = useRef(OVERLAYS.map(() => ({})));
   const progressFillRef = useRef(null);
   const scrollIndRef    = useRef(null);
+  const skipRef         = useRef(null);
   const pool            = useRef([]);
   const lastFi          = useRef(-1);
   const introTl         = useRef(null);
@@ -358,6 +383,9 @@ function ScrollyHero({ logoSrc }) {
       gsap.set(progressFillRef.current, { scaleX: progress, transformOrigin: "left center" });
     if (scrollIndRef.current)
       gsap.set(scrollIndRef.current, { opacity: progress < 0.04 ? 1 : 0 });
+    // autoAlpha también apaga la visibilidad: oculto no recibe clics.
+    if (skipRef.current)
+      gsap.set(skipRef.current, { autoAlpha: progress < 0.9 ? 1 : 0 });
   }, []);
 
   // ── Carga frames con new Image() ──────────────────────────────────────────
@@ -622,6 +650,22 @@ function ScrollyHero({ logoSrc }) {
             </rect>
           </svg>
         </div>
+
+        {/* Arriba al centro, entre el logo y el botón del menú: abajo están las
+            burbujas flotantes. En tablet (<lg) baja para no quedar bajo la
+            barra móvil del Navbar. */}
+        <SkipButton
+          label="Saltar a propiedades"
+          immediate
+          buttonRef={skipRef}
+          className="absolute left-1/2 -translate-x-1/2 top-20 lg:top-[30px]"
+          style={{
+            opacity: 0,
+            visibility: "hidden",
+            transition:
+              "opacity 0.4s ease, visibility 0.4s ease, background-color 0.2s, color 0.2s, border-color 0.2s",
+          }}
+        />
       </div>
     </div>
   );
