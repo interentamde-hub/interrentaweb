@@ -10,7 +10,7 @@ import { ArrowUpRight, Building2, Handshake } from "lucide-react";
 
 import Navbar from "../components/layout/Navbar";
 import Seo from "../components/common/Seo";
-import logo from "../assets/LogointerrentaTransparente.png";
+import avatar from "../assets/perfil-asesor.webp";
 import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "../components/ui/BrandIcons";
 import {
   ALLIES,
@@ -141,7 +141,15 @@ export default function Nosotros() {
 
       <main className="relative mx-auto flex w-full max-w-[460px] flex-col px-5 pt-28 pb-20 lg:pt-24">
         <motion.header {...rise(0)} className="text-center">
-          <img src={logo} alt="InterRenta" className="mx-auto h-28 w-auto object-contain" />
+          <div className="mx-auto h-32 w-32 rounded-full bg-gradient-to-br from-[#f5d170] via-[#ecb337] to-[#9c7419] p-[3px] shadow-[0_18px_50px_-18px_rgba(236,179,55,0.6)]">
+            <img
+              src={avatar}
+              alt="Asesor de InterRenta"
+              width={128}
+              height={128}
+              className="h-full w-full rounded-full border-[3px] border-[#161616] object-cover"
+            />
+          </div>
           <h1
             className="mt-6 text-[2.1rem] leading-[1.1] text-[#e2e2e2]"
             style={{ fontFamily: SERIF, fontWeight: 400 }}

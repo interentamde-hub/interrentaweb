@@ -1,5 +1,5 @@
-import { useEffect, lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, Suspense } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
@@ -10,17 +10,19 @@ import WhatsAppFloat from './components/ui/WhatsAppFloat'
 import CustomCursor from './components/ui/CustomCursor'
 import BrandPreloader from './components/ui/BrandPreloader'
 import RouteTransition from './components/ui/RouteTransition'
+import ErrorBoundary from './components/common/ErrorBoundary'
+import { lazyWithRetry } from './lib/lazyWithRetry'
 import logo from './assets/LogointerrentaTransparente.png'
 
 // ── Code-splitting: estas rutas salen del bundle inicial y se cargan bajo
 //    demanda (Home queda eager por ser la landing) ────────────────────────────
-const PropertyDetail = lazy(() => import('./pages/PropertyDetail'))
-const MunicipioPage = lazy(() => import('./pages/MunicipioPage'))
-const Nosotros = lazy(() => import('./pages/Nosotros'))
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
-const AdminLogin = lazy(() => import('./pages/AdminLogin'))
-const NotFound = lazy(() => import('./pages/NotFound'))
-const AssistantWidget = lazy(() => import('./components/chat/AssistantWidget'))
+const PropertyDetail = lazyWithRetry(() => import('./pages/PropertyDetail'))
+const MunicipioPage = lazyWithRetry(() => import('./pages/MunicipioPage'))
+const Nosotros = lazyWithRetry(() => import('./pages/Nosotros'))
+const AdminDashboard = lazyWithRetry(() => import('./pages/AdminDashboard'))
+const AdminLogin = lazyWithRetry(() => import('./pages/AdminLogin'))
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'))
+const AssistantWidget = lazyWithRetry(() => import('./components/chat/AssistantWidget'))
 
 // Fallback oscuro mientras carga el chunk de una ruta (evita flash blanco)
 const RouteFallback = () => (
@@ -28,6 +30,8 @@ const RouteFallback = () => (
 )
 
 export default function App() {
+  const { pathname } = useLocation()
+
   // ── Scroll suave (Lenis) solo en desktop; mobile usa scroll nativo ──────────
   useEffect(() => {
     const fine =
@@ -71,9 +75,14 @@ export default function App() {
     <RouteTransition logoSrc={logo} />
     <CustomCursor />
     <WhatsAppFloat />
-    <Suspense fallback={null}>
-      <AssistantWidget />
-    </Suspense>
+    {/* Opcional: si su chunk no carga, la página sigue sin el asistente */}
+    <ErrorBoundary fallback={null}>
+      <Suspense fallback={null}>
+        <AssistantWidget />
+      </Suspense>
+    </ErrorBoundary>
+    {/* key: al navegar a otra ruta el boundary se reinicia */}
+    <ErrorBoundary key={pathname}>
     <Suspense fallback={<RouteFallback />}>
     <Routes>
       <Route path="/" element={<Home />} />
@@ -99,6 +108,7 @@ export default function App() {
       <Route path="*" element={<NotFound />} />
     </Routes>
     </Suspense>
+    </ErrorBoundary>
     </>
   )
 }

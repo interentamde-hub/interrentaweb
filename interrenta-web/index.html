@@ -6,6 +6,18 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png?v=3" />
     <link rel="apple-touch-icon" href="/favicon.png?v=3" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#161616" />
+
+    <!-- Fondo y splash desde el primer byte: sin esto la pantalla queda en
+         blanco mientras baja el JavaScript (~300 KB), que en datos móviles
+         son varios segundos. React reemplaza el splash al montar. -->
+    <style>
+      html, body { background: #161616; margin: 0; }
+      .boot { position: fixed; inset: 0; display: grid; place-items: center; background: #161616; }
+      .boot img { width: 72px; height: 72px; border-radius: 18px; animation: boot 1.4s ease-in-out infinite; }
+      @keyframes boot { 50% { opacity: 0.45; } }
+      @media (prefers-reduced-motion: reduce) { .boot img { animation: none; } }
+    </style>
     <title>InterRenta — Bienes Raíces Oriente Antioqueño</title>
     <!-- Los tags marcados con data-static-seo son el fallback para crawlers SIN
          JavaScript (WhatsApp, Facebook). Al montar React se eliminan (main.jsx)
@@ -20,11 +32,21 @@
          Lo usan ambos heros: el scrollytelling y el estático de móvil ═══════ -->
     <link rel="preload" as="image" href="/frames/desktop/frame_0001.webp" />
 
-    <!-- ═══ Google Fonts (carga al inicio para evitar FOUF) ════════════════ -->
+    <!-- ═══ Google Fonts — NO bloqueante. Como stylesheet normal, el navegador
+         no pintaba nada hasta traer este CSS de otro servidor. Las fuentes
+         usan display=swap, así que el texto sale con la de sistema y cambia. ═ -->
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400;500;600&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
 
     <!-- ═══ Open Graph (SEO) ═══════════════════════════════════════════════ -->
     <meta data-static-seo property="og:title"       content="InterRenta — Bienes Raíces Oriente Antioqueño" />
@@ -42,7 +64,7 @@
     <meta data-static-seo name="twitter:image"       content="https://www.interrenta.com/og-image.jpg" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="boot" aria-hidden="true"><img src="/favicon.png?v=3" alt="" /></div></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
