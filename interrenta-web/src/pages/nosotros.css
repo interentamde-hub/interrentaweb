@@ -30,14 +30,14 @@
   background:
     radial-gradient(ellipse 60% 45% at 50% 58%, rgba(245, 209, 112, 0.22), transparent 70%),
     var(--ivory);
-  transition: background-color 0.9s ease, opacity 0.5s ease;
+  transition: opacity 0.6s ease;
   overflow: hidden;
 }
 .ir-house {
   position: relative; width: min(74vw, 360px); aspect-ratio: 360 / 330;
   border: 0; padding: 0; background: none; cursor: pointer;
   transform-origin: 50% 79.55%; /* centro de la puerta */
-  transition: transform 1.15s cubic-bezier(0.7, 0, 0.25, 1);
+  transition: transform 1.2s cubic-bezier(0.65, 0, 0.35, 1);
 }
 .ir-house svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .ir-house:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 12px; border-radius: 12px; }
@@ -109,8 +109,19 @@
 .ir-intro.is-opening .ir-door-light { opacity: 1; }
 .ir-intro.is-opening .ir-intro-text,
 .ir-intro.is-opening .ir-skip { opacity: 0; transform: translateY(8px); }
-.ir-intro.is-zooming .ir-house { transform: scale(17); }
-.ir-intro.is-zooming { background-color: #fff; }
+/* Zoom moderado: a 17x la capa pasaba de ~4.700 px y algunos teléfonos
+   dejaban de dibujarla. El resto del "entrar" lo hace la luz que se expande. */
+.ir-intro.is-zooming .ir-house { transform: scale(5); will-change: transform; }
+
+/* Luz que sale de la puerta y cubre la pantalla; termina en el mismo marfil
+   del contenido, así el cambio de escena no tiene salto de color. */
+.ir-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at var(--door-x, 50%) var(--door-y, 60%), #fffdf8 0%, #fcf4e2 30%, var(--ivory) 65%);
+  clip-path: circle(0px at var(--door-x, 50%) var(--door-y, 60%));
+  transition: clip-path 1.15s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.ir-intro.is-zooming .ir-glow { clip-path: circle(150vmax at var(--door-x, 50%) var(--door-y, 60%)); }
 .ir-intro.is-gone { opacity: 0; pointer-events: none; }
 
 /* ─────────────── Adentro ─────────────── */
@@ -229,8 +240,20 @@ a.ir-m2:hover .ir-arrow { transform: translateY(-50%) rotate(45deg); }
   .ir-stat-num { font-size: 4.4rem; }
 }
 
+/* Movimiento reducido: la casa sale ya dibujada y quieta, y al entrar solo se
+   desvanece. Antes se anulaban TODAS las transiciones y la entrada ocurría de golpe. */
+.ir-intro.is-calm .ir-draw { animation: none; stroke-dashoffset: 0; }
+.ir-intro.is-calm .ir-window { animation: none; opacity: 0.55; }
+.ir-intro.is-calm .ir-flame,
+.ir-intro.is-calm .ir-door-leaf,
+.ir-intro.is-calm .ir-intro-brand,
+.ir-intro.is-calm .ir-intro-cta { animation: none; opacity: 1; }
+.ir-intro.is-calm .ir-intro-cta span { animation: none; }
+.ir-intro.is-calm .ir-house,
+.ir-intro.is-calm .ir-door-leaf { transition: none; }
+.ir-intro.is-calm .ir-house:hover .ir-door-leaf { transform: none; }
+
 @media (prefers-reduced-motion: reduce) {
-  .ir-perfil *, .ir-perfil *::before, .ir-perfil *::after {
-    animation-duration: 0.01ms !important; animation-delay: 0s !important; transition-duration: 0.01ms !important;
-  }
+  .ir-inside.is-shown .ir-rise { animation: none; }
+  .ir-tile, .ir-arrow, .ir-prop-img img { transition: none; }
 }

@@ -27,7 +27,10 @@ import logoLight from "../assets/logo-interrenta-light.png";
 import "./nosotros.css";
 
 const AGENT_NAME = "Iván Toro";
-const INTRO_SEEN_KEY = "ir_casa_vista";
+// La casa vuelve a salir si pasó media hora: en Android una pestaña conserva la
+// sesión por días, y "una vez por sesión" la dejaba sin verse casi nunca.
+const INTRO_SEEN_KEY = "ir_casa_vista_at";
+const INTRO_REPEAT_MS = 30 * 60 * 1000;
 const AUTO_OPEN_MS = 3500;
 const INSTAGRAM_HANDLE = `@${INSTAGRAM_URL.split("/").filter(Boolean).pop()}`;
 
@@ -58,8 +61,19 @@ function prefersReducedMotion() {
 }
 
 // ─── Entrada: la casa ────────────────────────────────────────────────────────
-function HouseIntro({ onReveal, onDone }) {
+function introDue() {
+  const last = Number(localStorage.getItem(INTRO_SEEN_KEY) || 0);
+  return Date.now() - last > INTRO_REPEAT_MS;
+}
+
+/**
+ * calm = prefers-reduced-motion: la casa sale ya dibujada y al entrar solo se
+ * desvanece, sin puerta girando ni zoom.
+ */
+function HouseIntro({ calm, onReveal, onDone }) {
   const [phase, setPhase] = useState("");
+  const [door, setDoor] = useState(null);
+  const houseRef = useRef(null);
   const busy = useRef(false);
   const timers = useRef([]);
   const later = (fn, ms) => timers.current.push(setTimeout(fn, ms));
@@ -67,16 +81,24 @@ function HouseIntro({ onReveal, onDone }) {
   const leave = useCallback(() => {
     onReveal();
     setPhase((p) => `${p} is-gone`);
-    later(onDone, 500);
+    later(onDone, 650);
   }, [onReveal, onDone]);
 
   const enter = useCallback(() => {
     if (busy.current) return;
     busy.current = true;
+    if (calm) {
+      leave();
+      return;
+    }
+    // La luz se expande desde la puerta real en pantalla, no desde el centro.
+    const r = houseRef.current?.getBoundingClientRect();
+    if (r) setDoor({ x: r.left + r.width * 0.5, y: r.top + r.height * 0.7955 });
     setPhase("is-opening");
-    later(() => setPhase("is-opening is-zooming"), 700);
-    later(leave, 1750);
-  }, [leave]);
+    later(() => setPhase("is-opening is-zooming"), 650);
+    // El contenido aparece mientras la luz termina de cubrir: sin corte seco.
+    later(leave, 1500);
+  }, [calm, leave]);
 
   const skip = () => {
     if (busy.current) return;
@@ -92,8 +114,12 @@ function HouseIntro({ onReveal, onDone }) {
   }, [enter]);
 
   return (
-    <section className={`ir-intro ${phase}`} aria-label="Entrada">
-      <button type="button" className="ir-house" onClick={enter} aria-label="Abrir la puerta y entrar">
+    <section
+      className={`ir-intro ${calm ? "is-calm" : ""} ${phase}`}
+      aria-label="Entrada"
+      style={door ? { "--door-x": `${door.x}px`, "--door-y": `${door.y}px` } : undefined}
+    >
+      <button ref={houseRef} type="button" className="ir-house" onClick={enter} aria-label="Abrir la puerta y entrar">
         <svg viewBox="0 0 360 330" aria-hidden="true">
           <defs>
             <linearGradient id="ir-flame-grad" x1="0" y1="1" x2="0" y2="0">
@@ -137,15 +163,15 @@ function HouseIntro({ onReveal, onDone }) {
       <button type="button" className="ir-skip" onClick={skip}>
         Entrar directo
       </button>
+      <div className="ir-glow" aria-hidden="true" />
     </section>
   );
 }
 
 // ─── Página ──────────────────────────────────────────────────────────────────
 export default function Nosotros() {
-  const [introOn, setIntroOn] = useState(
-    () => !sessionStorage.getItem(INTRO_SEEN_KEY) && !prefersReducedMotion(),
-  );
+  const [calm] = useState(prefersReducedMotion);
+  const [introOn, setIntroOn] = useState(introDue);
   const [shown, setShown] = useState(!introOn);
   const [introKey, setIntroKey] = useState(0);
   const [listing, setListing] = useState({ items: [], count: 0 });
@@ -179,7 +205,7 @@ export default function Nosotros() {
   }, [introOn]);
 
   const reveal = useCallback(() => {
-    sessionStorage.setItem(INTRO_SEEN_KEY, "1");
+    localStorage.setItem(INTRO_SEEN_KEY, String(Date.now()));
     setShown(true);
   }, []);
   const finishIntro = useCallback(() => setIntroOn(false), []);
@@ -201,7 +227,7 @@ export default function Nosotros() {
         path="/nosotros"
       />
 
-      {introOn && <HouseIntro key={introKey} onReveal={reveal} onDone={finishIntro} />}
+      {introOn && <HouseIntro key={introKey} calm={calm} onReveal={reveal} onDone={finishIntro} />}
 
       <main className={`ir-inside ${shown ? "is-shown" : "is-waiting"}`}>
         <div className="ir-topbar ir-rise" style={{ animationDelay: "0.05s" }}>
