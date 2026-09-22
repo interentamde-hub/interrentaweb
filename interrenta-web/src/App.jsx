@@ -31,6 +31,8 @@ const RouteFallback = () => (
 
 export default function App() {
   const { pathname } = useLocation()
+  // /nosotros es la tarjeta de contacto: trae su propia entrada y ya es todo WhatsApp y redes.
+  const isProfile = pathname === '/nosotros' || pathname === '/perfil'
 
   // ── Scroll suave (Lenis) solo en desktop; mobile usa scroll nativo ──────────
   useEffect(() => {
@@ -71,16 +73,19 @@ export default function App() {
 
   return (
     <>
-    <BrandPreloader logoSrc={logo} />
+    {/* En /perfil tampoco: redirige a /nosotros y montar el preloader dejaría el scroll bloqueado. */}
+    {!isProfile && <BrandPreloader logoSrc={logo} />}
     <RouteTransition logoSrc={logo} />
     <CustomCursor />
-    <WhatsAppFloat />
+    {!isProfile && <WhatsAppFloat />}
     {/* Opcional: si su chunk no carga, la página sigue sin el asistente */}
-    <ErrorBoundary fallback={null}>
-      <Suspense fallback={null}>
-        <AssistantWidget />
-      </Suspense>
-    </ErrorBoundary>
+    {!isProfile && (
+      <ErrorBoundary fallback={null}>
+        <Suspense fallback={null}>
+          <AssistantWidget />
+        </Suspense>
+      </ErrorBoundary>
+    )}
     {/* key: al navegar a otra ruta el boundary se reinicia */}
     <ErrorBoundary key={pathname}>
     <Suspense fallback={<RouteFallback />}>

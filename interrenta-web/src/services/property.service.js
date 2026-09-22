@@ -30,6 +30,18 @@ export const getAllProperties = () =>
     .select("*")
     .order("created_at", { ascending: false });
 
+/** Las `limit` disponibles más recientes, más el total de disponibles en `count`. */
+export const getLatestAvailable = (limit = 3) =>
+  supabase
+    .from("properties")
+    .select(
+      "code,title,price,contract_type,property_type,sector,subsector,cover_url,bedrooms,area",
+      { count: "exact" },
+    )
+    .eq("status", "disponible")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
 export const getPropertiesBySector = (sector) =>
   supabase
     .from("properties")

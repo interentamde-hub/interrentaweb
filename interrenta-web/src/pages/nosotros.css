@@ -1,0 +1,236 @@
+/* /nosotros — página clara con entrada "la casa". Todo va bajo .ir-perfil. */
+
+.ir-perfil {
+  --ivory: #faf8f4;
+  --ivory-2: #f3eee3;
+  --paper: #ffffff;
+  --ink: #161616;
+  --ink-soft: #3d3d3d;
+  --muted: #6b7280;
+  --line: #ece6da;
+  --gold: #ecb337;
+  --gold-soft: #f5d170;
+  --gold-deep: #9c7419;
+  --serif: "Cormorant Garamond", Georgia, serif;
+  --sans: "Inter", -apple-system, "Segoe UI", Arial, sans-serif;
+
+  min-height: 100vh;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+.ir-perfil a { color: inherit; text-decoration: none; }
+
+/* ─────────────── Entrada: la casa ─────────────── */
+/* Por encima de las burbujas de WhatsApp (z-50) y del asistente (z-60). */
+.ir-intro {
+  position: fixed; inset: 0; z-index: 80;
+  display: grid; place-items: center; align-content: center; gap: 28px;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 58%, rgba(245, 209, 112, 0.22), transparent 70%),
+    var(--ivory);
+  transition: background-color 0.9s ease, opacity 0.5s ease;
+  overflow: hidden;
+}
+.ir-house {
+  position: relative; width: min(74vw, 360px); aspect-ratio: 360 / 330;
+  border: 0; padding: 0; background: none; cursor: pointer;
+  transform-origin: 50% 79.55%; /* centro de la puerta */
+  transition: transform 1.15s cubic-bezier(0.7, 0, 0.25, 1);
+}
+.ir-house svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ir-house:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 12px; border-radius: 12px; }
+
+.ir-draw {
+  fill: none; stroke: var(--gold-deep); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: ir-draw 1.9s cubic-bezier(0.6, 0.1, 0.3, 1) forwards;
+}
+.ir-d2 { animation-delay: 0.35s; }
+.ir-d3 { animation-delay: 0.7s; }
+@keyframes ir-draw { to { stroke-dashoffset: 0; } }
+
+.ir-window { fill: var(--gold-soft); opacity: 0; animation: ir-lit 1s ease 1.6s forwards, ir-breathe 3.2s ease-in-out 2.6s infinite; }
+.ir-window-2 { animation-delay: 1.8s, 2.9s; }
+@keyframes ir-lit { to { opacity: 0.55; } }
+@keyframes ir-breathe { 50% { opacity: 0.85; } }
+
+.ir-flame {
+  transform-box: fill-box; transform-origin: 50% 100%; opacity: 0;
+  animation: ir-fade 0.6s ease 1.9s forwards, ir-flicker 1.6s ease-in-out 2.5s infinite;
+}
+.ir-flame-inner { animation-delay: 2s, 2.6s; }
+@keyframes ir-flicker {
+  0%, 100% { transform: scale(1, 1) skewX(0); }
+  30% { transform: scale(0.94, 1.08) skewX(-3deg); }
+  60% { transform: scale(1.04, 0.95) skewX(2deg); }
+}
+@keyframes ir-fade { to { opacity: 1; } }
+
+/* La puerta es HTML sobre el SVG para poder girarla en 3D. */
+.ir-door-box { position: absolute; left: 43.056%; top: 65.152%; width: 13.889%; height: 28.788%; perspective: 500px; }
+.ir-door-light {
+  position: absolute; inset: 0; border-radius: 2px;
+  background: radial-gradient(circle at 50% 60%, #fff 0%, #fff6dc 45%, var(--gold-soft) 100%);
+  opacity: 0; transition: opacity 0.5s ease 0.15s;
+}
+.ir-door-leaf {
+  position: absolute; inset: 0; border: 2.4px solid var(--gold-deep); border-radius: 2px; background: var(--ivory);
+  transform-origin: left center; transition: transform 0.85s cubic-bezier(0.6, 0.05, 0.3, 1);
+  opacity: 0; animation: ir-fade 0.5s ease 1.4s forwards;
+}
+.ir-door-leaf::after {
+  content: ""; position: absolute; right: 16%; top: 52%;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--gold-deep);
+}
+.ir-house:hover .ir-door-leaf { transform: rotateY(-14deg); }
+.ir-house:hover .ir-door-light { opacity: 0.7; }
+
+.ir-intro-text { text-align: center; transition: opacity 0.35s ease, transform 0.35s ease; }
+.ir-intro-brand {
+  font-family: var(--serif); font-size: clamp(2.2rem, 7vw, 3rem); font-weight: 500; letter-spacing: 0.01em;
+  opacity: 0; animation: ir-fade 0.8s ease 1.2s forwards;
+}
+.ir-intro-cta {
+  margin-top: 10px; font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted);
+  opacity: 0; animation: ir-fade 0.8s ease 2.2s forwards;
+}
+.ir-intro-cta span { display: inline-block; margin-right: 8px; color: var(--gold-deep); animation: ir-nudge 1.6s ease-in-out 3s infinite; }
+@keyframes ir-nudge { 50% { transform: translateY(-4px); } }
+.ir-skip {
+  position: absolute; bottom: 26px; font-family: var(--sans); font-size: 12px; color: var(--muted);
+  background: none; border: 0; border-bottom: 1px solid var(--line); padding: 0 0 2px; cursor: pointer;
+}
+.ir-skip:hover { color: var(--ink); }
+
+/* Secuencia al abrir */
+.ir-intro.is-opening .ir-door-leaf { transform: rotateY(-108deg); }
+.ir-intro.is-opening .ir-door-light { opacity: 1; }
+.ir-intro.is-opening .ir-intro-text,
+.ir-intro.is-opening .ir-skip { opacity: 0; transform: translateY(8px); }
+.ir-intro.is-zooming .ir-house { transform: scale(17); }
+.ir-intro.is-zooming { background-color: #fff; }
+.ir-intro.is-gone { opacity: 0; pointer-events: none; }
+
+/* ─────────────── Adentro ─────────────── */
+.ir-inside { max-width: 1040px; margin: 0 auto; padding: 28px 20px 56px; }
+.ir-inside.is-waiting { opacity: 0; }
+.ir-inside.is-shown .ir-rise { animation: ir-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes ir-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+.ir-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 26px; }
+.ir-topbar img { height: 44px; width: auto; display: block; }
+.ir-topbar-actions { display: flex; gap: 8px; }
+.ir-pill {
+  font-family: var(--sans); font-size: 12px; color: var(--muted); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.ir-pill:hover { color: var(--ink); border-color: var(--gold); }
+
+.ir-hero { display: grid; grid-template-columns: 300px 1fr; gap: 40px; align-items: end; margin-bottom: 34px; }
+.ir-portrait { position: relative; }
+.ir-portrait img {
+  display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 28px;
+  box-shadow: 0 30px 60px -30px rgba(40, 28, 0, 0.45);
+}
+.ir-badge {
+  position: absolute; left: 16px; bottom: -14px; display: flex; gap: 8px; align-items: center;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px;
+  font-size: 12px; font-weight: 500; box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.3);
+}
+.ir-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15); }
+.ir-eyebrow { font-size: 12px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold-deep); font-weight: 600; }
+.ir-hero h1 {
+  font-family: var(--serif); font-weight: 500; font-size: clamp(3rem, 8vw, 5.2rem);
+  line-height: 0.95; margin: 12px 0 14px; letter-spacing: -0.01em; color: var(--ink);
+}
+.ir-hero p { font-size: 17px; line-height: 1.6; color: var(--ink-soft); max-width: 44ch; margin: 0; }
+.ir-hero p em { font-family: var(--serif); font-size: 1.2em; color: var(--gold-deep); }
+
+.ir-bento {
+  display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr);
+  grid-template-areas: "wa wa stat ig" "wa wa stat fb" "props props props props" "m2 m2 m2 mail";
+}
+.ir-bento.no-props { grid-template-areas: "wa wa ig ig" "wa wa fb fb" "m2 m2 m2 mail"; }
+.ir-tile {
+  position: relative; overflow: hidden; background: var(--paper); border: 1px solid var(--line); border-radius: 26px; padding: 22px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 20px 40px -32px rgba(60, 40, 0, 0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+a.ir-tile:hover { transform: translateY(-3px); border-color: #e0d3b6; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 26px 50px -30px rgba(60, 40, 0, 0.45); }
+.ir-arrow {
+  position: absolute; top: 20px; right: 20px; width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; border: 1px solid var(--line); transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease;
+}
+a.ir-tile:hover .ir-arrow { transform: rotate(45deg); background: var(--ink); color: #fff; border-color: var(--ink); }
+.ir-label { font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
+.ir-title { font-weight: 600; font-size: 17px; margin-top: 4px; }
+
+.ir-wa {
+  grid-area: wa; min-height: 250px; display: flex; flex-direction: column; justify-content: space-between;
+  background: linear-gradient(145deg, var(--gold-soft), var(--gold)); border-color: transparent;
+}
+.ir-wa .ir-arrow { border-color: rgba(22, 22, 22, 0.18); }
+.ir-wa h2 { font-family: var(--serif); font-weight: 500; font-size: clamp(2rem, 4vw, 2.7rem); line-height: 1; margin: 0 0 10px; }
+.ir-wa-meta { font-size: 14px; color: rgba(22, 22, 22, 0.72); display: flex; gap: 14px; flex-wrap: wrap; }
+
+.ir-stat { grid-area: stat; display: flex; flex-direction: column; justify-content: space-between; background: var(--ivory-2); border-color: transparent; }
+.ir-stat-num { font-family: var(--serif); font-size: 5.4rem; line-height: 0.9; color: var(--gold-deep); }
+.ir-live { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+
+.ir-ig { grid-area: ig; }
+.ir-fb { grid-area: fb; }
+.ir-ig .ir-title { font-size: 14px; overflow-wrap: anywhere; }
+.ir-social-icon { width: 30px; height: 30px; margin-bottom: 18px; }
+
+.ir-props { grid-area: props; padding: 24px; }
+.ir-props-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.ir-props-head h3 { font-family: var(--serif); font-weight: 500; font-size: 1.9rem; margin: 0; }
+.ir-props-head a { font-size: 14px; font-weight: 500; color: var(--gold-deep); white-space: nowrap; }
+.ir-props-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.ir-prop { display: block; }
+.ir-prop-img { position: relative; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; background: var(--ivory-2); }
+.ir-prop-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+.ir-prop:hover .ir-prop-img img { transform: scale(1.05); }
+.ir-chip {
+  position: absolute; top: 10px; left: 10px; border-radius: 999px; padding: 5px 10px; font-size: 11px; font-weight: 600;
+  background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(6px);
+}
+.ir-price { font-weight: 600; font-size: 17px; margin: 12px 0 2px; }
+.ir-price small { font-weight: 400; color: var(--muted); font-size: 13px; }
+.ir-where { font-size: 14px; color: var(--ink-soft); }
+.ir-specs { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+.ir-m2 { grid-area: m2; display: flex; align-items: center; gap: 18px; }
+.ir-m2 .ir-arrow { top: 50%; transform: translateY(-50%); }
+a.ir-m2:hover .ir-arrow { transform: translateY(-50%) rotate(45deg); }
+.ir-m2-mark {
+  flex: none; width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center;
+  background: var(--ink); color: var(--gold-soft); font-family: var(--serif); font-size: 1.6rem;
+}
+.ir-m2-name { font-family: var(--serif); font-size: 1.7rem; line-height: 1; }
+.ir-mail { grid-area: mail; display: flex; flex-direction: column; justify-content: center; }
+.ir-mail .ir-title { font-size: 14px; overflow-wrap: anywhere; }
+
+.ir-footer { margin-top: 40px; text-align: center; font-size: 12px; color: var(--muted); }
+
+@media (max-width: 760px) {
+  .ir-hero { grid-template-columns: 1fr; gap: 28px; }
+  .ir-portrait img { aspect-ratio: 5 / 4; object-position: 50% 12%; }
+  .ir-bento { grid-template-columns: 1fr 1fr; grid-template-areas: "wa wa" "stat ig" "stat fb" "props props" "m2 m2" "mail mail"; }
+  .ir-bento.no-props { grid-template-areas: "wa wa" "ig fb" "m2 m2" "mail mail"; }
+  .ir-props-grid {
+    grid-auto-flow: column; grid-auto-columns: 78%; grid-template-columns: none;
+    overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -24px; padding: 0 24px 6px;
+  }
+  .ir-prop { scroll-snap-align: start; }
+  .ir-stat-num { font-size: 4.4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ir-perfil *, .ir-perfil *::before, .ir-perfil *::after {
+    animation-duration: 0.01ms !important; animation-delay: 0s !important; transition-duration: 0.01ms !important;
+  }
+}

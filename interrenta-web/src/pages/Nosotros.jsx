@@ -1,17 +1,18 @@
 /**
  * Nosotros.jsx — InterRenta
- * Página tipo Linktree: canales de contacto, redes y aliados. Es la que se
- * comparte en las bios de redes (/perfil redirige aquí).
+ * Perfil tipo Linktree del asesor. Entra por "la casa" (el techo, la chimenea
+ * y la llama del logo): se toca la puerta, se abre y la cámara entra. Adentro,
+ * un bento con WhatsApp, redes, propiedades disponibles en vivo y aliados.
+ * /perfil redirige aquí; es la página del QR.
  */
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowUpRight, Building2, Handshake } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
-import Navbar from "../components/layout/Navbar";
 import Seo from "../components/common/Seo";
-import avatar from "../assets/perfil-asesor.webp";
 import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "../components/ui/BrandIcons";
+import { getLenis } from "../lib/lenis";
 import {
   ALLIES,
   EMAIL,
@@ -20,199 +21,317 @@ import {
   PHONE_DISPLAY,
   whatsappUrl,
 } from "../lib/contact";
+import { getLatestAvailable } from "../services/property.service";
+import retrato from "../assets/retrato-asesor.webp";
+import logoLight from "../assets/logo-interrenta-light.png";
+import "./nosotros.css";
 
-const SERIF = "'Cormorant Garamond', Georgia, serif";
-const SANS = "'Inter', sans-serif";
+const AGENT_NAME = "Iván Toro";
+const INTRO_SEEN_KEY = "ir_casa_vista";
+const AUTO_OPEN_MS = 3500;
+const INSTAGRAM_HANDLE = `@${INSTAGRAM_URL.split("/").filter(Boolean).pop()}`;
 
-const LINKS = [
-  {
-    href: whatsappUrl(),
-    icon: WhatsAppIcon,
-    title: "WhatsApp",
-    subtitle: `${PHONE_DISPLAY} · Respuesta rápida`,
-    primary: true,
-  },
-  {
-    href: INSTAGRAM_URL,
-    icon: InstagramIcon,
-    title: "Instagram",
-    subtitle: "Propiedades nuevas y recorridos",
-  },
-  {
-    href: FACEBOOK_URL,
-    icon: FacebookIcon,
-    title: "Facebook",
-    subtitle: "Síguenos y comparte",
-  },
-  {
-    to: "/#propiedades",
-    icon: Building2,
-    title: "Ver propiedades",
-    subtitle: "Inmuebles disponibles en arriendo y venta",
-  },
-];
+const cop = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
 
-const rise = (i) => ({
-  initial: { opacity: 0, y: 18 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.55, delay: 0.1 + i * 0.07, ease: "easeOut" },
-});
+// Los sectores vienen como se escribieron en el admin ("MEDELLIN", "El Retiro Antioquia").
+const tidy = (s) =>
+  (s || "")
+    .replace(/\bantioquia\b/gi, "")
+    .trim()
+    .toLowerCase()
+    .replace(/(^|\s)\p{L}/gu, (m) => m.toUpperCase());
 
-function LinkCard({ href, to, icon: Icon, title, subtitle, primary }) {
-  const className = `group flex items-center gap-4 rounded-2xl px-4 py-4 transition-all duration-200 hover:-translate-y-0.5 ${
-    primary
-      ? "bg-[#ecb337] text-[#161616] shadow-[0_12px_40px_-12px_rgba(236,179,55,0.55)] hover:bg-[#f5d170]"
-      : "border border-[#ecb337]/15 bg-[#1f1f1f] text-[#e2e2e2] hover:border-[#ecb337]/50 hover:bg-[#242424]"
-  }`;
+function propertyLines(p) {
+  const where = [tidy(p.subsector), tidy(p.sector)].filter(Boolean).join(" · ");
+  const specs = [
+    tidy(p.property_type),
+    p.bedrooms ? `${p.bedrooms} hab` : null,
+    p.area ? `${p.area} m²` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return { where, specs };
+}
 
-  const content = (
-    <>
-      <span
-        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-          primary ? "bg-[#161616]/10" : "bg-[#ecb337]/10 text-[#ecb337]"
-        }`}
-      >
-        <Icon className="w-[22px] h-[22px]" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[16px] font-semibold" style={{ fontFamily: SANS }}>
-          {title}
-        </span>
-        <span
-          className={`block truncate text-[13px] ${primary ? "text-[#161616]/70" : "text-[#9aa0ad]"}`}
-          style={{ fontFamily: SANS }}
-        >
-          {subtitle}
-        </span>
-      </span>
-      <ArrowUpRight
-        size={20}
-        className={`shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 ${
-          primary ? "" : "text-[#6b7280] group-hover:text-[#ecb337]"
-        }`}
-      />
-    </>
-  );
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
-  if (to) {
-    return (
-      <Link to={to} className={className} data-cursor="hover">
-        {content}
-      </Link>
-    );
-  }
+// ─── Entrada: la casa ────────────────────────────────────────────────────────
+function HouseIntro({ onReveal, onDone }) {
+  const [phase, setPhase] = useState("");
+  const busy = useRef(false);
+  const timers = useRef([]);
+  const later = (fn, ms) => timers.current.push(setTimeout(fn, ms));
+
+  const leave = useCallback(() => {
+    onReveal();
+    setPhase((p) => `${p} is-gone`);
+    later(onDone, 500);
+  }, [onReveal, onDone]);
+
+  const enter = useCallback(() => {
+    if (busy.current) return;
+    busy.current = true;
+    setPhase("is-opening");
+    later(() => setPhase("is-opening is-zooming"), 700);
+    later(leave, 1750);
+  }, [leave]);
+
+  const skip = () => {
+    if (busy.current) return;
+    busy.current = true;
+    leave();
+  };
+
+  // Quien llega por el QR viene a algo concreto: si no toca, la puerta se abre sola.
+  useEffect(() => {
+    later(enter, AUTO_OPEN_MS);
+    const pending = timers.current;
+    return () => pending.forEach(clearTimeout);
+  }, [enter]);
+
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={className} data-cursor="hover">
-      {content}
-    </a>
+    <section className={`ir-intro ${phase}`} aria-label="Entrada">
+      <button type="button" className="ir-house" onClick={enter} aria-label="Abrir la puerta y entrar">
+        <svg viewBox="0 0 360 330" aria-hidden="true">
+          <defs>
+            <linearGradient id="ir-flame-grad" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0" stopColor="#9c7419" />
+              <stop offset=".55" stopColor="#ecb337" />
+              <stop offset="1" stopColor="#f5d170" />
+            </linearGradient>
+          </defs>
+          <rect className="ir-window" x="100" y="190" width="44" height="44" rx="3" />
+          <rect className="ir-window ir-window-2" x="216" y="190" width="44" height="44" rx="3" />
+          {/* Techo a dos aguas y chimenea: los del logo */}
+          <path className="ir-draw" pathLength="1" d="M40 164 L180 50 L320 164" />
+          <path className="ir-draw ir-d2" pathLength="1" d="M238 97 V68 H262 V116" />
+          <path className="ir-draw" pathLength="1" d="M78 150 V310 M282 150 V310 M22 310 H338" />
+          <path className="ir-draw ir-d3" pathLength="1" d="M100 190 h44 v44 h-44 Z M122 190 v44 M100 212 h44" />
+          <path className="ir-draw ir-d3" pathLength="1" d="M216 190 h44 v44 h-44 Z M238 190 v44 M216 212 h44" />
+          <path className="ir-draw ir-d2" pathLength="1" d="M155 310 V215 H205 V310 M168 310 L152 330 M192 310 L208 330" />
+          <path
+            className="ir-flame"
+            fill="url(#ir-flame-grad)"
+            d="M250 22 C259 36 266 44 262 55 C259 64 241 64 238 55 C234 44 242 38 250 22 Z"
+          />
+          <path
+            className="ir-flame ir-flame-inner"
+            fill="#fff4d6"
+            d="M250 38 C255 46 257 50 255 56 C253 61 247 61 245 56 C243 50 246 46 250 38 Z"
+          />
+        </svg>
+        <span className="ir-door-box">
+          <span className="ir-door-light" />
+          <span className="ir-door-leaf" />
+        </span>
+      </button>
+
+      <div className="ir-intro-text">
+        <div className="ir-intro-brand">InterRenta</div>
+        <div className="ir-intro-cta">
+          <span aria-hidden="true">↑</span>Toca la puerta para entrar
+        </div>
+      </div>
+      <button type="button" className="ir-skip" onClick={skip}>
+        Entrar directo
+      </button>
+    </section>
   );
 }
 
-function SectionLabel({ children }) {
-  return (
-    <div className="flex items-center gap-4">
-      <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#ecb337]/30" />
-      <span className="text-[11px] uppercase tracking-[0.3em] text-[#ecb337]" style={{ fontFamily: SANS }}>
-        {children}
-      </span>
-      <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#ecb337]/30" />
-    </div>
-  );
-}
-
+// ─── Página ──────────────────────────────────────────────────────────────────
 export default function Nosotros() {
+  const [introOn, setIntroOn] = useState(
+    () => !sessionStorage.getItem(INTRO_SEEN_KEY) && !prefersReducedMotion(),
+  );
+  const [shown, setShown] = useState(!introOn);
+  const [introKey, setIntroKey] = useState(0);
+  const [listing, setListing] = useState({ items: [], count: 0 });
+
+  useEffect(() => {
+    getLatestAvailable(3).then(({ data, count, error }) => {
+      if (!error) setListing({ items: data || [], count: count || 0 });
+    });
+  }, []);
+
+  // El <body> del sitio es oscuro; aquí el rebote del scroll debe verse marfil.
+  useEffect(() => {
+    const prev = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = "#faf8f4";
+    return () => {
+      document.body.style.backgroundColor = prev;
+    };
+  }, []);
+
+  // Sin scroll mientras la casa está delante (Lenis en escritorio, nativo en móvil).
+  useEffect(() => {
+    if (!introOn) return;
+    const lenis = getLenis();
+    window.scrollTo(0, 0);
+    lenis?.stop();
+    document.body.style.overflow = "hidden";
+    return () => {
+      lenis?.start();
+      document.body.style.overflow = "";
+    };
+  }, [introOn]);
+
+  const reveal = useCallback(() => {
+    sessionStorage.setItem(INTRO_SEEN_KEY, "1");
+    setShown(true);
+  }, []);
+  const finishIntro = useCallback(() => setIntroOn(false), []);
+
+  const replay = () => {
+    setShown(false);
+    setIntroKey((k) => k + 1);
+    setIntroOn(true);
+  };
+
+  const hasListing = listing.count > 0;
+  const ally = ALLIES[0];
+
   return (
-    <div className="relative min-h-screen overflow-x-clip" style={{ backgroundColor: "#161616" }}>
+    <div className="ir-perfil">
       <Seo
-        title="Nosotros — InterRenta | Contacto, redes y aliados"
-        description="Habla con InterRenta por WhatsApp, síguenos en Instagram y Facebook, y conoce a nuestros aliados. Arriendo y venta de inmuebles."
+        title={`${AGENT_NAME} · InterRenta — WhatsApp, redes y propiedades`}
+        description={`Habla con ${AGENT_NAME} de InterRenta por WhatsApp, síguelo en Instagram y Facebook y mira las propiedades disponibles en arriendo y venta.`}
         path="/nosotros"
       />
-      <Navbar />
 
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[520px]"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 55% at 50% 0%, rgba(236,179,55,0.16), transparent 70%)",
-        }}
-      />
+      {introOn && <HouseIntro key={introKey} onReveal={reveal} onDone={finishIntro} />}
 
-      <main className="relative mx-auto flex w-full max-w-[460px] flex-col px-5 pt-28 pb-20 lg:pt-24">
-        <motion.header {...rise(0)} className="text-center">
-          <div className="mx-auto h-32 w-32 rounded-full bg-gradient-to-br from-[#f5d170] via-[#ecb337] to-[#9c7419] p-[3px] shadow-[0_18px_50px_-18px_rgba(236,179,55,0.6)]">
-            <img
-              src={avatar}
-              alt="Asesor de InterRenta"
-              width={128}
-              height={128}
-              className="h-full w-full rounded-full border-[3px] border-[#161616] object-cover"
-            />
+      <main className={`ir-inside ${shown ? "is-shown" : "is-waiting"}`}>
+        <div className="ir-topbar ir-rise" style={{ animationDelay: "0.05s" }}>
+          <Link to="/" aria-label="InterRenta — inicio">
+            <img src={logoLight} alt="InterRenta" />
+          </Link>
+          <div className="ir-topbar-actions">
+            <button type="button" className="ir-pill" onClick={replay}>
+              ↺ Ver la entrada
+            </button>
+            <Link to="/" className="ir-pill">
+              Sitio web
+            </Link>
           </div>
-          <h1
-            className="mt-6 text-[2.1rem] leading-[1.1] text-[#e2e2e2]"
-            style={{ fontFamily: SERIF, fontWeight: 400 }}
-          >
-            Te acompañamos de la búsqueda <span className="text-[#ecb337]">al cierre.</span>
-          </h1>
-          <p className="mx-auto mt-3 max-w-sm text-[15px] leading-relaxed text-[#9aa0ad]" style={{ fontFamily: SANS }}>
-            Arriendo y venta de inmuebles con transparencia y acompañamiento real. Escríbenos por el
-            canal que prefieras.
-          </p>
-        </motion.header>
+        </div>
 
-        <nav className="mt-10 flex flex-col gap-3" aria-label="Canales de contacto">
-          {LINKS.map((link, i) => (
-            <motion.div key={link.title} {...rise(i + 1)}>
-              <LinkCard {...link} />
-            </motion.div>
-          ))}
-        </nav>
-
-        <motion.section {...rise(LINKS.length + 1)} className="mt-12" aria-labelledby="aliados">
-          <h2 id="aliados" className="sr-only">
-            Aliados
-          </h2>
-          <SectionLabel>Aliados</SectionLabel>
-          <div className="mt-5 flex flex-col gap-3">
-            {ALLIES.map((ally) => (
-              <a
-                key={ally.name}
-                href={ally.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-cursor="hover"
-                className="group flex items-center gap-4 rounded-2xl border border-[#ecb337]/15 bg-gradient-to-br from-[#1f1f1f] to-[#1a1a1a] px-5 py-5 transition-colors hover:border-[#ecb337]/50"
-              >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#ecb337]/25 text-[#ecb337]">
-                  <Handshake size={22} strokeWidth={1.7} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[1.35rem] leading-tight text-[#e2e2e2]" style={{ fontFamily: SERIF }}>
-                    {ally.name}
-                  </span>
-                  <span className="mt-0.5 block text-[13px] leading-snug text-[#9aa0ad]" style={{ fontFamily: SANS }}>
-                    {ally.description}
-                  </span>
-                </span>
-                <span
-                  className="shrink-0 text-[12px] font-medium text-[#ecb337] transition-transform group-hover:translate-x-0.5"
-                  style={{ fontFamily: SANS }}
-                >
-                  Ver perfil
-                </span>
-              </a>
-            ))}
+        <section className="ir-hero">
+          <div className="ir-portrait ir-rise" style={{ animationDelay: "0.1s" }}>
+            <img src={retrato} alt={`${AGENT_NAME}, asesor inmobiliario de InterRenta`} width={600} height={800} />
+            <div className="ir-badge">
+              <span className="ir-dot" />
+              Disponible hoy
+            </div>
           </div>
-        </motion.section>
+          <div className="ir-rise" style={{ animationDelay: "0.2s" }}>
+            <div className="ir-eyebrow">InterRenta · Bienes raíces</div>
+            <h1>{AGENT_NAME}</h1>
+            <p>
+              Te acompaño a encontrar, arrendar o vender tu inmueble —{" "}
+              <em>de la búsqueda al cierre.</em>
+            </p>
+          </div>
+        </section>
 
-        <motion.footer {...rise(LINKS.length + 2)} className="mt-14 text-center" style={{ fontFamily: SANS }}>
-          <a href={`mailto:${EMAIL}`} className="text-[13px] text-[#9aa0ad] transition-colors hover:text-[#ecb337]">
-            {EMAIL}
+        <div className={`ir-bento ${hasListing ? "" : "no-props"}`}>
+          <a className="ir-tile ir-wa ir-rise" style={{ animationDelay: "0.3s" }} href={whatsappUrl()} target="_blank" rel="noopener noreferrer" data-cursor="hover">
+            <WhatsAppIcon className="w-[58px] h-[58px]" />
+            <span className="ir-arrow"><ArrowUpRight size={16} /></span>
+            <div>
+              <h2>
+                Escríbeme por
+                <br />
+                WhatsApp
+              </h2>
+              <div className="ir-wa-meta">
+                <span>{PHONE_DISPLAY}</span>
+                <span>· Respuesta en minutos</span>
+              </div>
+            </div>
           </a>
-          <p className="mt-2 text-xs text-[#6b7280]">© {new Date().getFullYear()} InterRenta</p>
-        </motion.footer>
+
+          {hasListing && (
+            <Link className="ir-tile ir-stat ir-rise" style={{ animationDelay: "0.36s" }} to="/#propiedades" data-cursor="hover">
+              <div className="ir-live">
+                <span className="ir-dot" />
+                En vivo
+              </div>
+              <div>
+                <div className="ir-stat-num">{listing.count}</div>
+                <div className="ir-title" style={{ fontWeight: 500 }}>
+                  {listing.count === 1 ? "propiedad disponible" : "propiedades"}
+                  <br />
+                  {listing.count === 1 ? "hoy" : "disponibles hoy"}
+                </div>
+              </div>
+            </Link>
+          )}
+
+          <a className="ir-tile ir-ig ir-rise" style={{ animationDelay: "0.42s" }} href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" data-cursor="hover">
+            <InstagramIcon className="ir-social-icon" />
+            <span className="ir-arrow"><ArrowUpRight size={16} /></span>
+            <div className="ir-label">Instagram</div>
+            <div className="ir-title">{INSTAGRAM_HANDLE}</div>
+          </a>
+
+          <a className="ir-tile ir-fb ir-rise" style={{ animationDelay: "0.48s" }} href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" data-cursor="hover">
+            <FacebookIcon className="ir-social-icon" />
+            <span className="ir-arrow"><ArrowUpRight size={16} /></span>
+            <div className="ir-label">Facebook</div>
+            <div className="ir-title">InterRenta</div>
+          </a>
+
+          {hasListing && (
+            <section className="ir-tile ir-props ir-rise" style={{ animationDelay: "0.54s" }}>
+              <div className="ir-props-head">
+                <h3>Disponibles ahora</h3>
+                <Link to="/#propiedades" data-cursor="hover">
+                  Ver las {listing.count} →
+                </Link>
+              </div>
+              <div className="ir-props-grid">
+                {listing.items.map((p) => {
+                  const { where, specs } = propertyLines(p);
+                  const rent = p.contract_type === "arriendo";
+                  return (
+                    <Link key={p.code} className="ir-prop" to={`/propiedades/${p.code}`} data-cursor="hover">
+                      <div className="ir-prop-img">
+                        {p.cover_url && <img src={p.cover_url} alt={p.title || p.code} loading="lazy" />}
+                        <span className="ir-chip">
+                          {p.code} · {rent ? "Arriendo" : "Venta"}
+                        </span>
+                      </div>
+                      <div className="ir-price">
+                        {cop.format(p.price)} {rent && <small>/ mes</small>}
+                      </div>
+                      {where && <div className="ir-where">{where}</div>}
+                      {specs && <div className="ir-specs">{specs}</div>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          <a className="ir-tile ir-m2 ir-rise" style={{ animationDelay: "0.6s" }} href={ally.url} target="_blank" rel="noopener noreferrer" data-cursor="hover">
+            <div className="ir-m2-mark">m²</div>
+            <div>
+              <div className="ir-label">Aliado</div>
+              <div className="ir-m2-name">{ally.name}</div>
+            </div>
+            <span className="ir-arrow"><ArrowUpRight size={16} /></span>
+          </a>
+
+          <a className="ir-tile ir-mail ir-rise" style={{ animationDelay: "0.66s" }} href={`mailto:${EMAIL}`} data-cursor="hover">
+            <div className="ir-label">Correo</div>
+            <div className="ir-title">{EMAIL}</div>
+          </a>
+        </div>
+
+        <footer className="ir-footer">© {new Date().getFullYear()} InterRenta</footer>
       </main>
     </div>
   );
